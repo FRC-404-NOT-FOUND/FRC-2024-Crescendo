@@ -91,5 +91,20 @@ public final class Constants {
     public static final TunableNumber kTurnSimP = new TunableNumber("Turn Sim kP", 10.0);
     public static final TunableNumber kTurnSimI = new TunableNumber("Turn Sim kI", 0.0);
     public static final TunableNumber kTurnSimD = new TunableNumber("Turn Sim kD", 0.0);
+
+    // PID for path following
+    public static final TunableNumber kPathFollowLinearP =
+        new TunableNumber("Path Follow Linear kP", 5.0);
+    public static final TunableNumber kPathFollowLinearI =
+        new TunableNumber("Path Follow Linear kI", 0.0);
+    public static final TunableNumber kPathFollowLinearD =
+        new TunableNumber("Path Follow Linear kD", 0.0);
+
+    public static final TunableNumber kPathFollowRotationalP =
+        new TunableNumber("Path Follow Rotational kP", 5.0);
+    public static final TunableNumber kPathFollowRotationalI =
+        new TunableNumber("Path Follow Rotational kI", 0.0);
+    public static final TunableNumber kPathFollowRotationalD =
+        new TunableNumber("Path Follow Rotational kD", 0.0);
   }
 }

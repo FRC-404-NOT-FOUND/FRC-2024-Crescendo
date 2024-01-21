@@ -18,6 +18,12 @@ import static com.argsrobotics.crescendo2024.Constants.Drive.kDrivebaseRadius;
 import static com.argsrobotics.crescendo2024.Constants.Drive.kMagnitudeSlewRate;
 import static com.argsrobotics.crescendo2024.Constants.Drive.kMaxAngularSpeed;
 import static com.argsrobotics.crescendo2024.Constants.Drive.kMaxLinearSpeed;
+import static com.argsrobotics.crescendo2024.Constants.Drive.kPathFollowLinearD;
+import static com.argsrobotics.crescendo2024.Constants.Drive.kPathFollowLinearI;
+import static com.argsrobotics.crescendo2024.Constants.Drive.kPathFollowLinearP;
+import static com.argsrobotics.crescendo2024.Constants.Drive.kPathFollowRotationalD;
+import static com.argsrobotics.crescendo2024.Constants.Drive.kPathFollowRotationalI;
+import static com.argsrobotics.crescendo2024.Constants.Drive.kPathFollowRotationalP;
 import static com.argsrobotics.crescendo2024.Constants.Drive.kRotationalSlewRate;
 import static com.argsrobotics.crescendo2024.Constants.Drive.kTrackWidthX;
 import static com.argsrobotics.crescendo2024.Constants.Drive.kTrackWidthY;
@@ -30,6 +36,7 @@ import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.pathfinding.Pathfinding;
 import com.pathplanner.lib.util.HolonomicPathFollowerConfig;
+import com.pathplanner.lib.util.PIDConstants;
 import com.pathplanner.lib.util.PathPlannerLogging;
 import com.pathplanner.lib.util.ReplanningConfig;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
@@ -109,12 +116,23 @@ public class Drive extends SubsystemBase implements AutoCloseable {
     gyroOffset = gyroInputs.yawPosition.minus(pose.getRotation());
 
     // Configure AutoBuilder for PathPlanner
+    // PathPlanner doesn't let you dynamically update PID values for tuning.
+    // They're still in here as TunableNumbers just because I didn't feel like changing it.
     AutoBuilder.configureHolonomic(
         this::getPose,
         this::setPose,
         () -> kinematics.toChassisSpeeds(getModuleStates()),
         this::runVelocity,
-        new HolonomicPathFollowerConfig(kMaxLinearSpeed, kDrivebaseRadius, new ReplanningConfig()),
+        new HolonomicPathFollowerConfig(
+            new PIDConstants(
+                kPathFollowLinearP.get(), kPathFollowLinearI.get(), kPathFollowLinearD.get()),
+            new PIDConstants(
+                kPathFollowRotationalP.get(),
+                kPathFollowRotationalI.get(),
+                kPathFollowRotationalD.get()),
+            kMaxLinearSpeed,
+            kDrivebaseRadius,
+            new ReplanningConfig()),
         () ->
             DriverStation.getAlliance().isPresent()
                 ? DriverStation.getAlliance().get() == Alliance.Red
