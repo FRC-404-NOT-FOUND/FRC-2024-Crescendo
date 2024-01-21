@@ -36,15 +36,11 @@ import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
-import edu.wpi.first.math.trajectory.Trajectory;
-import edu.wpi.first.math.trajectory.TrajectoryConfig;
-import edu.wpi.first.math.trajectory.TrajectoryGenerator;
 import edu.wpi.first.util.WPIUtilJNI;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
@@ -82,7 +78,6 @@ public class Drive extends SubsystemBase implements AutoCloseable {
   private double currentTranslationMag = 0.0;
 
   private final Field2d field = new Field2d();
-  private Trajectory activePath = null;
 
   public Drive(
       GyroIO gyroIO,
@@ -128,14 +123,13 @@ public class Drive extends SubsystemBase implements AutoCloseable {
     Pathfinding.setPathfinder(new LocalADStarAK());
     PathPlannerLogging.setLogActivePathCallback(
         (activePath) -> {
-          this.activePath =
-              TrajectoryGenerator.generateTrajectory(
-                  activePath, new TrajectoryConfig(kMaxLinearSpeed, kMagnitudeSlewRate));
+          field.getObject("activePath").setPoses(activePath);
           Logger.recordOutput(
               "Odometry/Trajectory", activePath.toArray(new Pose2d[activePath.size()]));
         });
     PathPlannerLogging.setLogTargetPoseCallback(
         (targetPose) -> {
+          field.getObject("targetPose").setPose(targetPose);
           Logger.recordOutput("Odometry/TrajectorySetpoint", targetPose);
         });
   }
@@ -236,15 +230,6 @@ public class Drive extends SubsystemBase implements AutoCloseable {
 
     // Update field
     field.setRobotPose(pose);
-    if (activePath != null) {
-      field.getObject("traj").setTrajectory(activePath);
-
-      Transform2d distanceToEnd =
-          activePath.getStates().get(activePath.getStates().size() - 1).poseMeters.minus(pose);
-      if (distanceToEnd.getX() < 0.1 && distanceToEnd.getY() < 0.1) {
-        activePath = null;
-      }
-    }
     SmartDashboard.putData(field);
   }
 
