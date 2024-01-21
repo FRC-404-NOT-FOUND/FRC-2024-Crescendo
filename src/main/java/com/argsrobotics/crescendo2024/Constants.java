@@ -64,10 +64,10 @@ public final class Constants {
     // Slew rates limit the rate of change of a variable, and the parameters are given in
     // units/second.
     // We are trying to limit the rate of change of the speed (magnitude) of a robot, measured in
-    // ft/sec, direction, measured in radians, and rotational speed, measured in radians/sec.
+    // m/sec, direction, measured in radians, and rotational speed, measured in radians/sec.
     // So the units of each variable would be as follows. See my comment in Drive.java for more
     // details on how we calculate this.
-    public static final double kMagnitudeSlewRate = 1.8 * kMaxLinearSpeed; // ft/sec^2
+    public static final double kMagnitudeSlewRate = 1.8 * kMaxLinearSpeed; // m/sec^2
     public static final double kDirectionSlewRate = 1.2; // rad/sec
     public static final double kRotationalSlewRate = 2.0 * kMaxAngularSpeed; // rad/sec^2
 
