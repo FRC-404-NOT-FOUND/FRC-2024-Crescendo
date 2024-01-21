@@ -13,10 +13,9 @@
 
 package frc.robot.subsystems.drive;
 
-import edu.wpi.first.wpilibj.Notifier;
-
 import static frc.robot.Constants.Drive.kOdometryFrequency;
 
+import edu.wpi.first.wpilibj.Notifier;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;

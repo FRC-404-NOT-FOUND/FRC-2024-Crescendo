@@ -14,9 +14,13 @@
 package frc.robot.oi;
 
 public interface DriverOI {
-    public double getDriveX();
-    public double getDriveY();
-    public double getDriveZ();
-    public double getCenterOfRotationX();
-    public double getCenterOfRotationY();
+  public double getDriveX();
+
+  public double getDriveY();
+
+  public double getDriveZ();
+
+  public double getCenterOfRotationX();
+
+  public double getCenterOfRotationY();
 }

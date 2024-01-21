@@ -22,12 +22,6 @@ import static frc.robot.Constants.Drive.kRotationalSlewRate;
 import static frc.robot.Constants.Drive.kTrackWidthX;
 import static frc.robot.Constants.Drive.kTrackWidthY;
 
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-
-import org.littletonrobotics.junction.AutoLogOutput;
-import org.littletonrobotics.junction.Logger;
-
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.path.PathPlannerPath;
@@ -35,7 +29,6 @@ import com.pathplanner.lib.pathfinding.Pathfinding;
 import com.pathplanner.lib.util.HolonomicPathFollowerConfig;
 import com.pathplanner.lib.util.PathPlannerLogging;
 import com.pathplanner.lib.util.ReplanningConfig;
-
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -59,10 +52,14 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.RobotState;
 import frc.robot.util.LocalADStarAK;
 import frc.robot.util.SwerveUtils;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+import org.littletonrobotics.junction.AutoLogOutput;
+import org.littletonrobotics.junction.Logger;
 
 /**
- * This is the class for the main drive subsystem.
- * It doesn't really do much. Most of it is just odometry code (as usual).
+ * This is the class for the main drive subsystem. It doesn't really do much. Most of it is just
+ * odometry code (as usual).
  */
 public class Drive extends SubsystemBase {
   public static final Lock odometryLock = new ReentrantLock();
@@ -112,12 +109,7 @@ public class Drive extends SubsystemBase {
       positions[i] = modules[i].getPosition();
     }
 
-    estimator = new SwerveDrivePoseEstimator(
-        kinematics,
-        gyroInputs.yawPosition,
-        positions,
-        pose
-    );
+    estimator = new SwerveDrivePoseEstimator(kinematics, gyroInputs.yawPosition, positions, pose);
 
     gyroOffset = gyroInputs.yawPosition.minus(pose.getRotation());
 
@@ -127,19 +119,18 @@ public class Drive extends SubsystemBase {
         this::setPose,
         () -> kinematics.toChassisSpeeds(getModuleStates()),
         this::runVelocity,
-        new HolonomicPathFollowerConfig(
-            kMaxLinearSpeed, kDrivebaseRadius, new ReplanningConfig()),
-        () -> DriverStation.getAlliance().isPresent()
-            ? DriverStation.getAlliance().get() == Alliance.Red
-            : false,
-        this
-      );
+        new HolonomicPathFollowerConfig(kMaxLinearSpeed, kDrivebaseRadius, new ReplanningConfig()),
+        () ->
+            DriverStation.getAlliance().isPresent()
+                ? DriverStation.getAlliance().get() == Alliance.Red
+                : false,
+        this);
     Pathfinding.setPathfinder(new LocalADStarAK());
     PathPlannerLogging.setLogActivePathCallback(
         (activePath) -> {
-          this.activePath = TrajectoryGenerator.generateTrajectory(
-            activePath,
-            new TrajectoryConfig(kMaxLinearSpeed, kMagnitudeSlewRate));
+          this.activePath =
+              TrajectoryGenerator.generateTrajectory(
+                  activePath, new TrajectoryConfig(kMaxLinearSpeed, kMagnitudeSlewRate));
           Logger.recordOutput(
               "Odometry/Trajectory", activePath.toArray(new Pose2d[activePath.size()]));
         });
@@ -172,9 +163,10 @@ public class Drive extends SubsystemBase {
       Logger.recordOutput("SwerveStates/SetpointsOptimized", new SwerveModuleState[] {});
     }
 
-    // This is the default AdvantageKit implementation with no vision support. I've left it here just in case
+    // This is the default AdvantageKit implementation with no vision support. I've left it here
+    // just in case
     // but we can easily use the SwerveDrivePoseEstimator to get the same job done with less work.
-    // 
+    //
     // // Update odometry
     // int deltaCount =
     //     gyroInputs.connected ? gyroInputs.odometryYawPositions.length : Integer.MAX_VALUE;
@@ -196,7 +188,8 @@ public class Drive extends SubsystemBase {
     //     // If the gyro is connected, replace the theta component of the twist
     //     // with the change in angle since the last sample.
     //     Rotation2d gyroRotation = gyroInputs.odometryYawPositions[deltaIndex];
-    //     twist = new Twist2d(twist.dx, twist.dy, gyroRotation.minus(lastGyroRotation).getRadians());
+    //     twist = new Twist2d(twist.dx, twist.dy,
+    // gyroRotation.minus(lastGyroRotation).getRadians());
     //     lastGyroRotation = gyroRotation;
     //   }
     //   // Apply the twist (change since last sample) to the current pose
@@ -217,7 +210,8 @@ public class Drive extends SubsystemBase {
 
       Rotation2d rotation;
 
-      // We'll probabaly never need this but just in case and because AdvantageKit does it it "theoretically" works without the gyro.
+      // We'll probabaly never need this but just in case and because AdvantageKit does it it
+      // "theoretically" works without the gyro.
       if (gyroInputs.connected) {
         // If the gyro is connected, replace the theta component of the twist
         // with the change in angle since the last sample.
@@ -235,14 +229,18 @@ public class Drive extends SubsystemBase {
     pose = estimator.getEstimatedPosition();
 
     RobotState.getCurrentRobotState().currentPose = pose;
-    RobotState.getCurrentRobotState().currentModuleStates = new SwerveModuleState[]{modules[0].getState(), modules[1].getState(), modules[2].getState(), modules[3].getState()};
+    RobotState.getCurrentRobotState().currentModuleStates =
+        new SwerveModuleState[] {
+          modules[0].getState(), modules[1].getState(), modules[2].getState(), modules[3].getState()
+        };
 
     // Update field
     field.setRobotPose(pose);
     if (activePath != null) {
       field.getObject("traj").setTrajectory(activePath);
 
-      Transform2d distanceToEnd = activePath.getStates().get(activePath.getStates().size() - 1).poseMeters.minus(pose);
+      Transform2d distanceToEnd =
+          activePath.getStates().get(activePath.getStates().size() - 1).poseMeters.minus(pose);
       if (distanceToEnd.getX() < 0.1 && distanceToEnd.getY() < 0.1) {
         activePath = null;
       }
@@ -262,20 +260,36 @@ public class Drive extends SubsystemBase {
     ChassisSpeeds discreteSpeeds = ChassisSpeeds.discretize(speeds, 0.02);
 
     if (rateLimited) {
-      // Alright so I saw this in the Rev example code and wasn't sure why they were converting the speeds to
-      // polar coordinates until I tried to do it myself. Here's the explanation because I and others will probably forget.
-      // The way slew rate limiters work is by keeping track of the past values of a variable and limiting the rate of change.
-      // You cannot have a two variable rate limiter (well you could but whatever), so by determining the polar coordinates of the speeds
+      // Alright so I saw this in the Rev example code and wasn't sure why they were converting the
+      // speeds to
+      // polar coordinates until I tried to do it myself. Here's the explanation because I and
+      // others will probably forget.
+      // The way slew rate limiters work is by keeping track of the past values of a variable and
+      // limiting the rate of change.
+      // You cannot have a two variable rate limiter (well you could but whatever), so by
+      // determining the polar coordinates of the speeds
       // (r and theta, distance and angle or in this context speed and direction),
-      // You can later undo it using trigonometry but combine the variables into one so that you can limit the rates equally as well as limiting direction change.
-      double translationDirection = Math.atan2(discreteSpeeds.vyMetersPerSecond, discreteSpeeds.vxMetersPerSecond); // This is the omega direction in radians of the polar coordinates
-      double translationMagnitude = Math.hypot(discreteSpeeds.vxMetersPerSecond, discreteSpeeds.vyMetersPerSecond); // This is the r value of the polar coordinates, calculated using the distance formula from the origin (hypoteneuse).
+      // You can later undo it using trigonometry but combine the variables into one so that you can
+      // limit the rates equally as well as limiting direction change.
+      double translationDirection =
+          Math.atan2(
+              discreteSpeeds.vyMetersPerSecond,
+              discreteSpeeds
+                  .vxMetersPerSecond); // This is the omega direction in radians of the polar
+      // coordinates
+      double translationMagnitude =
+          Math.hypot(
+              discreteSpeeds.vxMetersPerSecond,
+              discreteSpeeds
+                  .vyMetersPerSecond); // This is the r value of the polar coordinates, calculated
+      // using the distance formula from the origin (hypoteneuse).
 
       double directionSlewRate;
       if (currentTranslationMag != 0.0) {
         directionSlewRate = Math.abs(kDirectionSlewRate / currentTranslationMag);
       } else {
-        directionSlewRate = 500.0; //some high number that means the slew rate is effectively instantaneous
+        directionSlewRate =
+            500.0; // some high number that means the slew rate is effectively instantaneous
       }
 
       double currentTime = WPIUtilJNI.now() * 1e-6;
@@ -283,22 +297,24 @@ public class Drive extends SubsystemBase {
 
       double angleDif = SwerveUtils.angleDifference(translationDirection, currentTranslationDir);
 
-      if (angleDif < 0.45*Math.PI) {
-        currentTranslationDir = SwerveUtils.stepTowardsCircular(currentTranslationDir, translationDirection, directionSlewRate * elapsedTime);
+      if (angleDif < 0.45 * Math.PI) {
+        currentTranslationDir =
+            SwerveUtils.stepTowardsCircular(
+                currentTranslationDir, translationDirection, directionSlewRate * elapsedTime);
         currentTranslationMag = magLimiter.calculate(translationMagnitude);
-      }
-      else if (angleDif > 0.85*Math.PI) {
-        if (currentTranslationMag > 1e-4) { //some small number to avoid floating-point errors with equality checking
+      } else if (angleDif > 0.85 * Math.PI) {
+        if (currentTranslationMag
+            > 1e-4) { // some small number to avoid floating-point errors with equality checking
           // keep currentTranslationDirection unchanged
           currentTranslationMag = magLimiter.calculate(0.0);
-        }
-        else {
+        } else {
           currentTranslationDir = SwerveUtils.wrapAngle(currentTranslationDir + Math.PI);
           currentTranslationMag = magLimiter.calculate(translationMagnitude);
         }
-      }
-      else {
-        currentTranslationDir = SwerveUtils.stepTowardsCircular(translationMagnitude, translationDirection, directionSlewRate * elapsedTime);
+      } else {
+        currentTranslationDir =
+            SwerveUtils.stepTowardsCircular(
+                translationMagnitude, translationDirection, directionSlewRate * elapsedTime);
         currentTranslationMag = magLimiter.calculate(0.0);
       }
 
@@ -306,10 +322,12 @@ public class Drive extends SubsystemBase {
 
       discreteSpeeds.vxMetersPerSecond = currentTranslationMag * Math.cos(currentTranslationDir);
       discreteSpeeds.vyMetersPerSecond = currentTranslationMag * Math.sin(currentTranslationDir);
-      discreteSpeeds.omegaRadiansPerSecond = rotLimiter.calculate(discreteSpeeds.omegaRadiansPerSecond);
+      discreteSpeeds.omegaRadiansPerSecond =
+          rotLimiter.calculate(discreteSpeeds.omegaRadiansPerSecond);
     }
 
-    SwerveModuleState[] setpointStates = kinematics.toSwerveModuleStates(discreteSpeeds, centerOfRot);
+    SwerveModuleState[] setpointStates =
+        kinematics.toSwerveModuleStates(discreteSpeeds, centerOfRot);
     SwerveDriveKinematics.desaturateWheelSpeeds(setpointStates, kMaxLinearSpeed);
 
     // Send setpoints to modules
@@ -325,9 +343,10 @@ public class Drive extends SubsystemBase {
   }
 
   /**
-   * Runs the drive at the desired velocity. This uses the default setting
-   * of zero center of rotation difference and no rate limiting (for PathPlanner to automatically control acceleration).
-   * 
+   * Runs the drive at the desired velocity. This uses the default setting of zero center of
+   * rotation difference and no rate limiting (for PathPlanner to automatically control
+   * acceleration).
+   *
    * @param speeds
    */
   public void runVelocity(ChassisSpeeds speeds) {
@@ -341,12 +360,18 @@ public class Drive extends SubsystemBase {
     if (path == null) {
       path = PathPlannerPath.fromPathFile(pathname);
     }
-    return AutoBuilder.pathfindThenFollowPath(path, new PathConstraints(kMaxLinearSpeed, kDirectionSlewRate, kMaxAngularSpeed, kRotationalSlewRate));
+    return AutoBuilder.pathfindThenFollowPath(
+        path,
+        new PathConstraints(
+            kMaxLinearSpeed, kDirectionSlewRate, kMaxAngularSpeed, kRotationalSlewRate));
   }
 
   /** Pathfind to a specific point */
   public Command goToPoint(Pose2d point) {
-    return AutoBuilder.pathfindToPose(point, new PathConstraints(kMaxLinearSpeed, kDirectionSlewRate, kMaxAngularSpeed, kRotationalSlewRate));
+    return AutoBuilder.pathfindToPose(
+        point,
+        new PathConstraints(
+            kMaxLinearSpeed, kDirectionSlewRate, kMaxAngularSpeed, kRotationalSlewRate));
   }
 
   /** Follow an auto routine */

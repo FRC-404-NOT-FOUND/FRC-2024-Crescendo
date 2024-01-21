@@ -16,38 +16,38 @@ package frc.robot.oi;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 
 public class DriverOIXBox implements DriverOI {
-    private final CommandXboxController gamepad;
+  private final CommandXboxController gamepad;
 
-    public DriverOIXBox(int port) {
-        gamepad = new CommandXboxController(port);
-    }
+  public DriverOIXBox(int port) {
+    gamepad = new CommandXboxController(port);
+  }
 
-    public DriverOIXBox() {
-        this(0);
-    }
+  public DriverOIXBox() {
+    this(0);
+  }
 
-    @Override
-    public double getDriveY() {
-        return -gamepad.getLeftY();
-    }
+  @Override
+  public double getDriveY() {
+    return -gamepad.getLeftY();
+  }
 
-    @Override
-    public double getDriveX() {
-        return -gamepad.getLeftX();
-    }
+  @Override
+  public double getDriveX() {
+    return -gamepad.getLeftX();
+  }
 
-    @Override
-    public double getDriveZ() {
-        return -gamepad.getRightX();
-    }
+  @Override
+  public double getDriveZ() {
+    return -gamepad.getRightX();
+  }
 
-    @Override
-    public double getCenterOfRotationX() {
-        return 0.0;
-    }
+  @Override
+  public double getCenterOfRotationX() {
+    return 0.0;
+  }
 
-    @Override
-    public double getCenterOfRotationY() {
-        return 0.0;
-    }
+  @Override
+  public double getCenterOfRotationY() {
+    return 0.0;
+  }
 }

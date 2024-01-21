@@ -45,7 +45,8 @@ public final class Constants {
 
     public static final double kTrackWidthY = Units.inchesToMeters(25.0);
     public static final double kTrackWidthX = Units.inchesToMeters(25.0);
-    public static final double kDrivebaseRadius = Math.hypot(kTrackWidthX / 2.0, kTrackWidthY / 2.0);
+    public static final double kDrivebaseRadius =
+        Math.hypot(kTrackWidthX / 2.0, kTrackWidthY / 2.0);
 
     public static final double kMaxLinearSpeed = Units.feetToMeters(15.76);
     public static final double kMaxAngularSpeed = kMaxLinearSpeed / kDrivebaseRadius;
@@ -61,7 +62,6 @@ public final class Constants {
     public static final double kMagnitudeSlewRate = 1.8 * kMaxLinearSpeed; // ft/sec^2
     public static final double kDirectionSlewRate = 1.2; // ft/sec^2
     public static final double kRotationalSlewRate = 2.0 * kMaxAngularSpeed; // ft/sec^2
-
 
     // PID/FF constants
     public static final TunableNumber kDriveS = new TunableNumber("Drive kS", 0.1);

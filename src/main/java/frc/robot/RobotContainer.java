@@ -28,9 +28,7 @@ import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOSparkMax;
 import frc.robot.subsystems.vision.Vision;
-
 import java.util.HashMap;
-
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 /**
@@ -86,11 +84,12 @@ public class RobotContainer {
     }
 
     RobotState.setDrivetrain(drive);
-    RobotState.setVision(new Vision(
-      new HashMap<>() {{
-        
-      }}
-    ));
+    RobotState.setVision(
+        new Vision(
+            new HashMap<>() {
+              {
+              }
+            }));
 
     // Set up auto routines
     autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());

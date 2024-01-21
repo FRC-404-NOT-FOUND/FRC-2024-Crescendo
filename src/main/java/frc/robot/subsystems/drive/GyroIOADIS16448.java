@@ -13,12 +13,11 @@
 
 package frc.robot.subsystems.drive;
 
-import java.util.Queue;
-import java.util.function.DoubleSupplier;
-
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.ADIS16448_IMU;
+import java.util.Queue;
+import java.util.function.DoubleSupplier;
 
 /** IO implementation for ADIS16448 IMU */
 public class GyroIOADIS16448 implements GyroIO {

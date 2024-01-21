@@ -13,35 +13,34 @@
 
 package frc.robot.subsystems.vision;
 
+import edu.wpi.first.math.geometry.Pose2d;
 import org.littletonrobotics.junction.AutoLog;
 
-import edu.wpi.first.math.geometry.Pose2d;
-
 public interface VisionCameraIO {
-    public enum Mode {
-        AprilTag,
-        Target
-    }
+  public enum Mode {
+    AprilTag,
+    Target
+  }
 
-    @AutoLog
-    public static class VisionCameraIOInputs {
-        public boolean connected;
-        public Mode mode;
-        public boolean hasTarget;
-        public boolean hasEstimatedPose;
-        public Pose2d lastEstimatedPose;
-        public Pose2d estimatedTargetPose;
-        public double timestamp;
-    }
+  @AutoLog
+  public static class VisionCameraIOInputs {
+    public boolean connected;
+    public Mode mode;
+    public boolean hasTarget;
+    public boolean hasEstimatedPose;
+    public Pose2d lastEstimatedPose;
+    public Pose2d estimatedTargetPose;
+    public double timestamp;
+  }
 
-    /** Updates the inputs for the camera pose and targets. */
-    public default void updateInputs(VisionCameraIOInputs inputs) {}
+  /** Updates the inputs for the camera pose and targets. */
+  public default void updateInputs(VisionCameraIOInputs inputs) {}
 
-    /** Sets the camera mode. */
-    public default void setMode(Mode mode) {}
+  /** Sets the camera mode. */
+  public default void setMode(Mode mode) {}
 
-    /** Gets the camera mode. */
-    public default Mode getMode() {
-        return Mode.AprilTag;
-    }
+  /** Gets the camera mode. */
+  public default Mode getMode() {
+    return Mode.AprilTag;
+  }
 }

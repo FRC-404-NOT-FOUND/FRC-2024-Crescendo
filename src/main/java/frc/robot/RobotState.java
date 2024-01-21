@@ -20,42 +20,42 @@ import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionCameraIO.Mode;
 
 public class RobotState {
-    private static RobotState currentRobotState;
-    private static Drive drivetrain;
-    private static Vision vision;
+  private static RobotState currentRobotState;
+  private static Drive drivetrain;
+  private static Vision vision;
 
-    public Pose2d currentPose = null;
-    public SwerveModuleState[] currentModuleStates = null;
-    
-    public Mode[] currentCameraModes = null;
-    public Pose2d currentTarget = null;
-    public boolean hasTarget = false;
+  public Pose2d currentPose = null;
+  public SwerveModuleState[] currentModuleStates = null;
 
-    public static void addVisionMeasurement(Pose2d pose, double timestamp) {
-        drivetrain.addVisionMeasurement(pose, timestamp);
-    }
+  public Mode[] currentCameraModes = null;
+  public Pose2d currentTarget = null;
+  public boolean hasTarget = false;
 
-    public static Drive getDrivetrain() {
-        return drivetrain;
-    }
+  public static void addVisionMeasurement(Pose2d pose, double timestamp) {
+    drivetrain.addVisionMeasurement(pose, timestamp);
+  }
 
-    public static Vision getVision() {
-        return vision;
-    }
+  public static Drive getDrivetrain() {
+    return drivetrain;
+  }
 
-    public static void setDrivetrain(Drive drivetrain) {
-        RobotState.drivetrain = drivetrain;
-    }
+  public static Vision getVision() {
+    return vision;
+  }
 
-    public static void setVision(Vision vision) {
-        RobotState.vision = vision;
-    }
+  public static void setDrivetrain(Drive drivetrain) {
+    RobotState.drivetrain = drivetrain;
+  }
 
-    public static void setCurrentRobotState(RobotState robotState) {
-        currentRobotState = robotState;
-    }
+  public static void setVision(Vision vision) {
+    RobotState.vision = vision;
+  }
 
-    public static RobotState getCurrentRobotState() {
-        return currentRobotState;
-    }
+  public static void setCurrentRobotState(RobotState robotState) {
+    currentRobotState = robotState;
+  }
+
+  public static RobotState getCurrentRobotState() {
+    return currentRobotState;
+  }
 }

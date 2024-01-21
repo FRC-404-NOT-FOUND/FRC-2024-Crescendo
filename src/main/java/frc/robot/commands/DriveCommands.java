@@ -13,6 +13,8 @@
 
 package frc.robot.commands;
 
+import static frc.robot.Constants.Drive.kDriveDeadband;
+
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -22,9 +24,6 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.subsystems.drive.Drive;
-
-import static frc.robot.Constants.Drive.kDriveDeadband;
-
 import java.util.function.DoubleSupplier;
 
 public class DriveCommands {
@@ -81,11 +80,10 @@ public class DriveCommands {
    * Field relative drive command using two joysticks (controlling linear and angular velocities).
    */
   public static Command joystickDrive(
-    Drive drive,
-    DoubleSupplier xSupplier,
-    DoubleSupplier ySupplier,
-    DoubleSupplier omegaSupplier) {
-    return joystickDrive(
-        drive, xSupplier, ySupplier, omegaSupplier, () -> 0.0, () -> 0.0);
+      Drive drive,
+      DoubleSupplier xSupplier,
+      DoubleSupplier ySupplier,
+      DoubleSupplier omegaSupplier) {
+    return joystickDrive(drive, xSupplier, ySupplier, omegaSupplier, () -> 0.0, () -> 0.0);
   }
 }

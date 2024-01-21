@@ -16,40 +16,40 @@ package frc.robot.oi;
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick;
 
 public class DriverOIDualFlightStick implements DriverOI {
-    private final CommandJoystick left;
-    private final CommandJoystick right;
+  private final CommandJoystick left;
+  private final CommandJoystick right;
 
-    public DriverOIDualFlightStick(int lp, int rp) {
-        left = new CommandJoystick(lp);
-        right = new CommandJoystick(rp);
-    }
+  public DriverOIDualFlightStick(int lp, int rp) {
+    left = new CommandJoystick(lp);
+    right = new CommandJoystick(rp);
+  }
 
-    public DriverOIDualFlightStick() {
-        this(0, 1);
-    }
+  public DriverOIDualFlightStick() {
+    this(0, 1);
+  }
 
-    @Override
-    public double getDriveY() {
-        return -left.getY();
-    }
+  @Override
+  public double getDriveY() {
+    return -left.getY();
+  }
 
-    @Override
-    public double getDriveX() {
-        return -left.getX();
-    }
+  @Override
+  public double getDriveX() {
+    return -left.getX();
+  }
 
-    @Override
-    public double getDriveZ() {
-        return -right.getZ();
-    }
+  @Override
+  public double getDriveZ() {
+    return -right.getZ();
+  }
 
-    @Override
-    public double getCenterOfRotationX() {
-        return right.getX();
-    }
+  @Override
+  public double getCenterOfRotationX() {
+    return right.getX();
+  }
 
-    @Override
-    public double getCenterOfRotationY() {
-        return right.getY();
-    }
+  @Override
+  public double getCenterOfRotationY() {
+    return right.getY();
+  }
 }

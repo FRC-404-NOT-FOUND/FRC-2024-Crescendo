@@ -13,22 +13,23 @@
 
 package frc.robot.subsystems.drive;
 
+import static frc.robot.Constants.Drive.*;
+
 import com.revrobotics.AbsoluteEncoder;
-import com.revrobotics.CANSparkMax;
-import com.revrobotics.RelativeEncoder;
 import com.revrobotics.CANSparkBase.IdleMode;
 import com.revrobotics.CANSparkLowLevel.MotorType;
 import com.revrobotics.CANSparkLowLevel.PeriodicFrame;
+import com.revrobotics.CANSparkMax;
+import com.revrobotics.RelativeEncoder;
 import com.revrobotics.SparkAbsoluteEncoder.Type;
-
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
 import java.util.Queue;
-import static frc.robot.Constants.Drive.*;
 
 /**
- * Module IO implementation for SparkMax drive motor controller, SparkMax turn motor controller (NEO 550),
- * and Rev through bore absolute encoders based off of AdvantageKit template (https://github.com/Mechanical-Advantage/AdvantageKit).
+ * Module IO implementation for SparkMax drive motor controller, SparkMax turn motor controller (NEO
+ * 550), and Rev through bore absolute encoders based off of AdvantageKit template
+ * (https://github.com/Mechanical-Advantage/AdvantageKit).
  */
 public class ModuleIOSparkMax implements ModuleIO {
   private final CANSparkMax driveSparkMax;
@@ -110,11 +111,9 @@ public class ModuleIOSparkMax implements ModuleIO {
     inputs.driveCurrentAmps = new double[] {driveSparkMax.getOutputCurrent()};
 
     inputs.turnAbsolutePosition = new Rotation2d(turnEncoder.getPosition());
-    inputs.turnPosition =
-        Rotation2d.fromRotations(turnEncoder.getPosition() / kTurnGearRatio);
+    inputs.turnPosition = Rotation2d.fromRotations(turnEncoder.getPosition() / kTurnGearRatio);
     inputs.turnVelocityRadPerSec =
-        Units.rotationsPerMinuteToRadiansPerSecond(turnEncoder.getVelocity())
-            / kTurnGearRatio;
+        Units.rotationsPerMinuteToRadiansPerSecond(turnEncoder.getVelocity()) / kTurnGearRatio;
     inputs.turnAppliedVolts = turnSparkMax.getAppliedOutput() * turnSparkMax.getBusVoltage();
     inputs.turnCurrentAmps = new double[] {turnSparkMax.getOutputCurrent()};
 
