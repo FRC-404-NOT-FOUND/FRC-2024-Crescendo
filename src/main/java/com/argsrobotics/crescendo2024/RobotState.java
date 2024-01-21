@@ -13,11 +13,11 @@
 
 package com.argsrobotics.crescendo2024;
 
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.kinematics.SwerveModuleState;
 import com.argsrobotics.crescendo2024.subsystems.drive.Drive;
 import com.argsrobotics.crescendo2024.subsystems.vision.Vision;
 import com.argsrobotics.crescendo2024.subsystems.vision.VisionCameraIO.Mode;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.kinematics.SwerveModuleState;
 
 public class RobotState {
   private static RobotState currentRobotState;

@@ -16,7 +16,7 @@ package com.argsrobotics.crescendo2024.subsystems.vision;
 import edu.wpi.first.math.geometry.Pose2d;
 import org.littletonrobotics.junction.AutoLog;
 
-public interface VisionCameraIO {
+public interface VisionCameraIO extends AutoCloseable {
   public enum Mode {
     AprilTag,
     Target
@@ -28,7 +28,7 @@ public interface VisionCameraIO {
     public Mode mode;
     public boolean hasTarget;
     public boolean hasEstimatedPose;
-    public Pose2d lastEstimatedPose;
+    public Pose2d estimatedPose;
     public Pose2d estimatedTargetPose;
     public double timestamp;
   }
@@ -43,4 +43,6 @@ public interface VisionCameraIO {
   public default Mode getMode() {
     return Mode.AprilTag;
   }
+
+  public default void close() {}
 }

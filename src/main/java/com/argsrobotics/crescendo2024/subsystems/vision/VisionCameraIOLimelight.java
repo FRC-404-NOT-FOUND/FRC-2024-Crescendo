@@ -16,6 +16,7 @@
 
 package com.argsrobotics.crescendo2024.subsystems.vision;
 
+import com.argsrobotics.crescendo2024.RobotState;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
@@ -24,7 +25,6 @@ import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.Timer;
-import com.argsrobotics.crescendo2024.RobotState;
 
 public class VisionCameraIOLimelight implements VisionCameraIO {
   private static NetworkTable nt = NetworkTableInstance.getDefault().getTable("limelight");
@@ -40,7 +40,7 @@ public class VisionCameraIOLimelight implements VisionCameraIO {
       inputs.hasTarget = false;
       inputs.estimatedTargetPose = null;
       inputs.hasEstimatedPose = false;
-      inputs.lastEstimatedPose = null;
+      inputs.estimatedPose = null;
       inputs.timestamp = 0;
       return;
     }
@@ -60,10 +60,10 @@ public class VisionCameraIOLimelight implements VisionCameraIO {
                 new Translation3d(poseData[0], poseData[1], poseData[2]),
                 new Rotation3d(poseData[3], poseData[4], poseData[5]));
 
-        inputs.lastEstimatedPose = pose.toPose2d();
+        inputs.estimatedPose = pose.toPose2d();
       }
     } else {
-      inputs.lastEstimatedPose = null;
+      inputs.estimatedPose = null;
       inputs.hasEstimatedPose = false;
       inputs.hasTarget = get("tv").getDouble(0) != 0;
       if (inputs.hasTarget) {

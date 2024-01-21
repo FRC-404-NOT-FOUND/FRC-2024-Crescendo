@@ -16,7 +16,7 @@ package com.argsrobotics.crescendo2024.subsystems.drive;
 import edu.wpi.first.math.geometry.Rotation2d;
 import org.littletonrobotics.junction.AutoLog;
 
-public interface ModuleIO {
+public interface ModuleIO extends AutoCloseable {
   @AutoLog
   public static class ModuleIOInputs {
     public double drivePositionRad = 0.0;
@@ -48,4 +48,6 @@ public interface ModuleIO {
 
   /** Enable or disable brake mode on the turn motor. */
   public default void setTurnBrakeMode(boolean enable) {}
+
+  public default void close() {}
 }

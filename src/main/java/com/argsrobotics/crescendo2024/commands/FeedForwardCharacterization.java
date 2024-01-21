@@ -13,10 +13,10 @@
 
 package com.argsrobotics.crescendo2024.commands;
 
+import com.argsrobotics.crescendo2024.util.PolynomialRegression;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
-import com.argsrobotics.crescendo2024.util.PolynomialRegression;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Consumer;

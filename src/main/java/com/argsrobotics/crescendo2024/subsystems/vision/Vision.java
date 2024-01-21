@@ -13,11 +13,11 @@
 
 package com.argsrobotics.crescendo2024.subsystems.vision;
 
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import com.argsrobotics.crescendo2024.RobotState;
 import com.argsrobotics.crescendo2024.subsystems.vision.VisionCameraIO.Mode;
 import com.argsrobotics.crescendo2024.util.FilteredPose2d;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import java.util.HashMap;
 import org.littletonrobotics.junction.Logger;
 
@@ -53,7 +53,7 @@ public class Vision extends SubsystemBase {
 
     for (var input : cameraInputs) {
       if (input.hasEstimatedPose) {
-        RobotState.addVisionMeasurement(input.lastEstimatedPose, input.timestamp);
+        RobotState.addVisionMeasurement(input.estimatedPose, input.timestamp);
       } else if (input.hasTarget) {
         hasTarget = true;
         currentTarget = filteredPose.calculate(input.estimatedTargetPose);

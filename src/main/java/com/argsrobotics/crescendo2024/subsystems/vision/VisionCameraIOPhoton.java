@@ -13,10 +13,10 @@
 
 package com.argsrobotics.crescendo2024.subsystems.vision;
 
+import com.argsrobotics.crescendo2024.RobotState;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Transform3d;
-import com.argsrobotics.crescendo2024.RobotState;
 import java.util.Optional;
 import org.photonvision.EstimatedRobotPose;
 import org.photonvision.PhotonCamera;
@@ -50,7 +50,7 @@ public class VisionCameraIOPhoton implements VisionCameraIO {
       inputs.hasTarget = false;
       inputs.estimatedTargetPose = null;
       inputs.hasEstimatedPose = false;
-      inputs.lastEstimatedPose = null;
+      inputs.estimatedPose = null;
       inputs.timestamp = 0;
       return;
     }
@@ -64,7 +64,7 @@ public class VisionCameraIOPhoton implements VisionCameraIO {
       inputs.hasTarget = false;
       inputs.estimatedTargetPose = null;
       inputs.hasEstimatedPose = pose.isPresent();
-      pose.ifPresent(p -> inputs.lastEstimatedPose = p.estimatedPose.toPose2d());
+      pose.ifPresent(p -> inputs.estimatedPose = p.estimatedPose.toPose2d());
     } else {
       inputs.hasTarget = result.hasTargets();
       inputs.estimatedTargetPose =
@@ -95,5 +95,10 @@ public class VisionCameraIOPhoton implements VisionCameraIO {
     } else {
       return Mode.Target;
     }
+  }
+
+  @Override
+  public void close() {
+    camera.close();
   }
 }

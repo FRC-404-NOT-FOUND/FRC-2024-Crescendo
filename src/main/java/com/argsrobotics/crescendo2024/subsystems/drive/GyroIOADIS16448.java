@@ -42,4 +42,9 @@ public class GyroIOADIS16448 implements GyroIO {
             .toArray(Rotation2d[]::new);
     yawPositionQueue.clear();
   }
+
+  @Override
+  public void close() {
+    gyro.close();
+  }
 }

@@ -13,8 +13,8 @@
 
 package com.argsrobotics.crescendo2024.util;
 
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import com.argsrobotics.crescendo2024.Constants;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 /**
  * Class for a tunable number. Gets value from dashboard in tuning mode, returns default if not or

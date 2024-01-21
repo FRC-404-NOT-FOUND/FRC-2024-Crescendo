@@ -15,15 +15,15 @@ package com.argsrobotics.crescendo2024.subsystems.drive;
 
 import static com.argsrobotics.crescendo2024.Constants.Drive.*;
 
+import com.argsrobotics.crescendo2024.Constants;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
-import com.argsrobotics.crescendo2024.Constants;
 import org.littletonrobotics.junction.Logger;
 
-public class Module {
+public class Module implements AutoCloseable {
   private final ModuleIO io;
   private final ModuleIOInputsAutoLogged inputs = new ModuleIOInputsAutoLogged();
   private final int index;
@@ -209,5 +209,10 @@ public class Module {
   /** Returns the drive velocity in radians/sec. */
   public double getCharacterizationVelocity() {
     return inputs.driveVelocityRadPerSec;
+  }
+
+  @Override
+  public void close() {
+    io.close();
   }
 }

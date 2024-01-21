@@ -22,6 +22,9 @@ import static com.argsrobotics.crescendo2024.Constants.Drive.kRotationalSlewRate
 import static com.argsrobotics.crescendo2024.Constants.Drive.kTrackWidthX;
 import static com.argsrobotics.crescendo2024.Constants.Drive.kTrackWidthY;
 
+import com.argsrobotics.crescendo2024.RobotState;
+import com.argsrobotics.crescendo2024.util.LocalADStarAK;
+import com.argsrobotics.crescendo2024.util.SwerveUtils;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.path.PathPlannerPath;
@@ -49,9 +52,6 @@ import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import com.argsrobotics.crescendo2024.RobotState;
-import com.argsrobotics.crescendo2024.util.LocalADStarAK;
-import com.argsrobotics.crescendo2024.util.SwerveUtils;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import org.littletonrobotics.junction.AutoLogOutput;
@@ -61,7 +61,7 @@ import org.littletonrobotics.junction.Logger;
  * This is the class for the main drive subsystem. It doesn't really do much. Most of it is just
  * odometry code (as usual).
  */
-public class Drive extends SubsystemBase {
+public class Drive extends SubsystemBase implements AutoCloseable {
   public static final Lock odometryLock = new ReentrantLock();
   private final GyroIO gyroIO;
   private final GyroIOInputsAutoLogged gyroInputs = new GyroIOInputsAutoLogged();
@@ -415,7 +415,7 @@ public class Drive extends SubsystemBase {
 
   /** Returns the module states (turn angles and drive velocities) for all of the modules. */
   @AutoLogOutput(key = "SwerveStates/Measured")
-  private SwerveModuleState[] getModuleStates() {
+  public SwerveModuleState[] getModuleStates() {
     SwerveModuleState[] states = new SwerveModuleState[4];
     for (int i = 0; i < 4; i++) {
       states[i] = modules[i].getState();
@@ -457,6 +457,14 @@ public class Drive extends SubsystemBase {
   /** Returns the maximum angular speed in radians per sec. */
   public double getMaxAngularSpeedRadPerSec() {
     return kMaxAngularSpeed;
+  }
+
+  public void close() {
+    SparkMaxOdometryThread.getInstance().close();
+    gyroIO.close();
+    for (var module : modules) {
+      module.close();
+    }
   }
 
   /** Returns an array of module translations. */

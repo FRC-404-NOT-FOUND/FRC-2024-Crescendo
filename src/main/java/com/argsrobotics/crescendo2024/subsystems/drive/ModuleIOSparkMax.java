@@ -148,4 +148,10 @@ public class ModuleIOSparkMax implements ModuleIO {
   public void setTurnBrakeMode(boolean enable) {
     turnSparkMax.setIdleMode(enable ? IdleMode.kBrake : IdleMode.kCoast);
   }
+
+  @Override
+  public void close() {
+    driveSparkMax.close();
+    turnSparkMax.close();
+  }
 }

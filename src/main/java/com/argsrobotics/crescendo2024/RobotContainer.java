@@ -13,10 +13,6 @@
 
 package com.argsrobotics.crescendo2024;
 
-import com.pathplanner.lib.auto.AutoBuilder;
-import edu.wpi.first.wpilibj.GenericHID;
-import edu.wpi.first.wpilibj.XboxController;
-import edu.wpi.first.wpilibj2.command.Command;
 import com.argsrobotics.crescendo2024.commands.DriveCommands;
 import com.argsrobotics.crescendo2024.commands.FeedForwardCharacterization;
 import com.argsrobotics.crescendo2024.oi.DriverOI;
@@ -28,6 +24,10 @@ import com.argsrobotics.crescendo2024.subsystems.drive.ModuleIO;
 import com.argsrobotics.crescendo2024.subsystems.drive.ModuleIOSim;
 import com.argsrobotics.crescendo2024.subsystems.drive.ModuleIOSparkMax;
 import com.argsrobotics.crescendo2024.subsystems.vision.Vision;
+import com.pathplanner.lib.auto.AutoBuilder;
+import edu.wpi.first.wpilibj.GenericHID;
+import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj2.command.Command;
 import java.util.HashMap;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
@@ -40,6 +40,8 @@ import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 public class RobotContainer {
   // Subsystems
   private final Drive drive;
+  private final Vision vision;
+
   // Controller
   private final DriverOI oi = new DriverOIXBox();
 
@@ -58,6 +60,13 @@ public class RobotContainer {
                 new ModuleIOSparkMax(1),
                 new ModuleIOSparkMax(2),
                 new ModuleIOSparkMax(3));
+
+        vision =
+            new Vision(
+                new HashMap<>() {
+                  {
+                  }
+                });
         break;
 
       case SIM:
@@ -69,6 +78,13 @@ public class RobotContainer {
                 new ModuleIOSim(),
                 new ModuleIOSim(),
                 new ModuleIOSim());
+
+        vision =
+            new Vision(
+                new HashMap<>() {
+                  {
+                  }
+                });
         break;
 
       default:
@@ -80,16 +96,18 @@ public class RobotContainer {
                 new ModuleIO() {},
                 new ModuleIO() {},
                 new ModuleIO() {});
+
+        vision =
+            new Vision(
+                new HashMap<>() {
+                  {
+                  }
+                });
         break;
     }
 
     RobotState.setDrivetrain(drive);
-    RobotState.setVision(
-        new Vision(
-            new HashMap<>() {
-              {
-              }
-            }));
+    RobotState.setVision(vision);
 
     // Set up auto routines
     autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());

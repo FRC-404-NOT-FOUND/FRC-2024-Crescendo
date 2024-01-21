@@ -28,7 +28,7 @@ import java.util.function.DoubleSupplier;
  * <p>This version is intended for devices like the SparkMax that require polling rather than a
  * blocking thread. A Notifier thread is used to gather samples with consistent timing.
  */
-public class SparkMaxOdometryThread {
+public class SparkMaxOdometryThread implements AutoCloseable {
   private List<DoubleSupplier> signals = new ArrayList<>();
   private List<Queue<Double>> queues = new ArrayList<>();
 
@@ -69,5 +69,12 @@ public class SparkMaxOdometryThread {
     } finally {
       Drive.odometryLock.unlock();
     }
+  }
+
+  @Override
+  public void close() {
+    notifier.stop();
+    notifier.close();
+    instance = null;
   }
 }
