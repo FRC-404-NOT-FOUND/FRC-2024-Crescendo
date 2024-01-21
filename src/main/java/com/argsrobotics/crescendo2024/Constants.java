@@ -43,8 +43,8 @@ public final class Constants {
   public static class Drive {
     public static final double kDriveDeadband = 0.1;
 
-    public static final double kTrackWidthY = Units.inchesToMeters(25.0);
-    public static final double kTrackWidthX = Units.inchesToMeters(25.0);
+    public static final double kTrackWidthY = Units.inchesToMeters(28.0);
+    public static final double kTrackWidthX = Units.inchesToMeters(28.0);
     public static final double kDrivebaseRadius =
         Math.hypot(kTrackWidthX / 2.0, kTrackWidthY / 2.0);
 
@@ -59,9 +59,17 @@ public final class Constants {
     public static final double kTurnGearRatio = 9424.0 / 203.0;
 
     // Slew Rate
+    // Quick explanation: Derivatives are the rate of change of a graph, basically a graph of all of
+    // the slopes.
+    // Slew rates limit the rate of change of a variable, and the parameters are given in
+    // units/second.
+    // We are trying to limit the rate of change of the speed (magnitude) of a robot, measured in
+    // ft/sec, direction, measured in radians, and rotational speed, measured in radians/sec.
+    // So the units of each variable would be as follows. See my comment in Drive.java for more
+    // details on how we calculate this.
     public static final double kMagnitudeSlewRate = 1.8 * kMaxLinearSpeed; // ft/sec^2
-    public static final double kDirectionSlewRate = 1.2; // ft/sec^2
-    public static final double kRotationalSlewRate = 2.0 * kMaxAngularSpeed; // ft/sec^2
+    public static final double kDirectionSlewRate = 1.2; // rad/sec
+    public static final double kRotationalSlewRate = 2.0 * kMaxAngularSpeed; // rad/sec^2
 
     // PID/FF constants
     public static final TunableNumber kDriveS = new TunableNumber("Drive kS", 0.1);
