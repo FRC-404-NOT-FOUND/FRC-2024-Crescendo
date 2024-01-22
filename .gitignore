@@ -172,4 +172,4 @@ out/
 simgui*.json
 
 # Version file
-src/main/java/frc/robot/BuildConstants.java
+src/main/java/com/argsrobotics/crescendo2024/BuildConstants.java

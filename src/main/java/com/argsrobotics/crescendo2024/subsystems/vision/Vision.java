@@ -37,7 +37,16 @@ public class Vision extends SubsystemBase {
     for (int i = 0; i < cameras.keySet().size(); i++) {
       this.cameras[i] = cameras.get(cameraNames[i]);
       this.cameraInputs[i] = new VisionCameraIOInputsAutoLogged();
+      this.cameras[i].updateInputs(this.cameraInputs[i]);
+      Logger.processInputs("Vision/Camera " + cameraNames[i], cameraInputs[i]);
     }
+
+    Mode[] modes = new Mode[this.cameras.length];
+    for (int i = 0; i < this.cameras.length; i++) {
+      modes[i] = this.cameras[i].getMode();
+    }
+
+    RobotState.getCurrentRobotState().currentCameraModes = modes;
   }
 
   @Override

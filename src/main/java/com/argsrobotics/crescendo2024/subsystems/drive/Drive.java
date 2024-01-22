@@ -51,6 +51,7 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.util.WPIUtilJNI;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -115,6 +116,9 @@ public class Drive extends SubsystemBase implements AutoCloseable {
 
     gyroOffset = gyroInputs.yawPosition.minus(pose.getRotation());
 
+    RobotState.getCurrentRobotState().currentPose = pose;
+    RobotState.getCurrentRobotState().currentModuleStates = getModuleStates();
+
     // Configure AutoBuilder for PathPlanner
     // PathPlanner doesn't let you dynamically update PID values for tuning.
     // They're still in here as TunableNumbers just because I didn't feel like changing it.
@@ -164,7 +168,7 @@ public class Drive extends SubsystemBase implements AutoCloseable {
       module.periodic();
     }
 
-    if (DriverStation.isDisabled()) {
+    if (RobotBase.isReal() && DriverStation.isDisabled()) {
       // Stop moving when disabled
       for (var module : modules) {
         module.stop();
@@ -432,6 +436,12 @@ public class Drive extends SubsystemBase implements AutoCloseable {
     return pose;
   }
 
+  /** Returns the current ChassisSpeeds */
+  @AutoLogOutput(key = "Odometry/ChassisSpeeds")
+  public ChassisSpeeds getChassisSpeeds() {
+    return kinematics.toChassisSpeeds(getModuleStates());
+  }
+
   /** Returns the current odometry rotation. */
   public Rotation2d getRotation() {
     return pose.getRotation();
@@ -445,6 +455,7 @@ public class Drive extends SubsystemBase implements AutoCloseable {
     }
     estimator.resetPosition(lastGyroRotation, positions, pose);
     this.pose = pose;
+    RobotState.getCurrentRobotState().currentPose = pose;
   }
 
   /** Add vision measurements to the pose estimator. */

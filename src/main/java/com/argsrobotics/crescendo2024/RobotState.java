@@ -20,7 +20,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 
 public class RobotState {
-  private static RobotState currentRobotState;
+  private static RobotState currentRobotState = new RobotState();
   private static Drive drivetrain;
   private static Vision vision;
 
