@@ -44,6 +44,7 @@ import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
@@ -99,21 +100,11 @@ public class Drive extends SubsystemBase implements AutoCloseable {
     modules[2] = new Module(blModuleIO, 2);
     modules[3] = new Module(brModuleIO, 3);
 
-    odometryLock.lock();
-    gyroIO.updateInputs(gyroInputs);
-    for (var module : modules) {
-      module.updateInputs();
-    }
-    odometryLock.unlock();
-    Logger.processInputs("Drive/Gyro", gyroInputs);
+    updateOdometry();
 
-    SwerveModulePosition[] positions = new SwerveModulePosition[4];
-    for (int i = 0; i < 4; i++) {
-      positions[i] = modules[i].getPosition();
-    }
-
-    estimator = new SwerveDrivePoseEstimator(kinematics, gyroInputs.yawPosition, positions, pose);
-
+    estimator =
+        new SwerveDrivePoseEstimator(
+            kinematics, gyroInputs.yawPosition, getModulePositions(), pose);
     gyroOffset = gyroInputs.yawPosition.minus(pose.getRotation());
 
     RobotState.getCurrentRobotState().currentPose = pose;
@@ -142,6 +133,7 @@ public class Drive extends SubsystemBase implements AutoCloseable {
                 ? DriverStation.getAlliance().get() == Alliance.Red
                 : false,
         this);
+
     Pathfinding.setPathfinder(new LocalADStarAK());
     PathPlannerLogging.setLogActivePathCallback(
         (activePath) -> {
@@ -157,13 +149,8 @@ public class Drive extends SubsystemBase implements AutoCloseable {
   }
 
   public void periodic() {
-    odometryLock.lock(); // Prevents odometry updates while reading data
-    gyroIO.updateInputs(gyroInputs);
-    for (var module : modules) {
-      module.updateInputs();
-    }
-    odometryLock.unlock();
-    Logger.processInputs("Drive/Gyro", gyroInputs);
+    updateOdometry();
+
     for (var module : modules) {
       module.periodic();
     }
@@ -217,14 +204,26 @@ public class Drive extends SubsystemBase implements AutoCloseable {
     for (int i = 0; i < 4; i++) {
       deltaCount = Math.min(deltaCount, modules[i].getPositionDeltas().length);
     }
+
+    Pose2d latestPose = pose;
+
     for (int deltaIndex = 0; deltaIndex < deltaCount; deltaIndex++) {
       // Read wheel deltas from each module
       SwerveModulePosition[] wheelDeltas = new SwerveModulePosition[4];
+      double timestamp = 0.0;
       for (int moduleIndex = 0; moduleIndex < 4; moduleIndex++) {
+        timestamp += modules[moduleIndex].getPositionDeltaTimestamps()[deltaIndex];
         wheelDeltas[moduleIndex] = modules[moduleIndex].getPositionDeltas()[deltaIndex];
       }
 
+      // Get the average of the times of odometry samples.
+      timestamp /= 4.0;
+
       Rotation2d rotation;
+      Twist2d latestTwist = kinematics.toTwist2d(wheelDeltas);
+
+      // Initial estimate of latest pose to use as a basis for rotation.
+      latestPose = latestPose.exp(latestTwist);
 
       // We'll probabaly never need this but just in case and because AdvantageKit does it it
       // "theoretically" works without the gyro.
@@ -235,24 +234,37 @@ public class Drive extends SubsystemBase implements AutoCloseable {
         lastGyroRotation = gyroRotation;
         rotation = gyroRotation;
       } else {
-        var twist = kinematics.toTwist2d(wheelDeltas);
-        rotation = pose.exp(twist).getRotation().minus(gyroOffset);
+        // If the gyro is not connected, get the latest pose and use that rotation.
+        rotation = latestPose.getRotation().plus(gyroOffset);
       }
 
-      estimator.update(rotation, wheelDeltas);
+      // Because we're using deltas to update,
+      // adding the timestampe will make it more accurate so it can get a better measurement of when
+      // we were at that position since it uses a low-pass filter which is time-based.
+      latestPose = estimator.updateWithTime(timestamp, rotation, wheelDeltas);
     }
 
+    // Tecnically we could just do pose = latestPose but just in case a vision update happens we'll
+    // do this. There's really no point though.
     pose = estimator.getEstimatedPosition();
 
     RobotState.getCurrentRobotState().currentPose = pose;
-    RobotState.getCurrentRobotState().currentModuleStates =
-        new SwerveModuleState[] {
-          modules[0].getState(), modules[1].getState(), modules[2].getState(), modules[3].getState()
-        };
+    RobotState.getCurrentRobotState().currentModuleStates = getModuleStates();
 
     // Update field
     field.setRobotPose(pose);
     SmartDashboard.putData(field);
+  }
+
+  /** Updates the odometry. */
+  public void updateOdometry() {
+    odometryLock.lock(); // Prevents odometry updates while reading data
+    gyroIO.updateInputs(gyroInputs);
+    for (var module : modules) {
+      module.updateInputs();
+    }
+    odometryLock.unlock();
+    Logger.processInputs("Drive/Gyro", gyroInputs);
   }
 
   /**
@@ -267,70 +279,7 @@ public class Drive extends SubsystemBase implements AutoCloseable {
     ChassisSpeeds discreteSpeeds = ChassisSpeeds.discretize(speeds, 0.02);
 
     if (rateLimited) {
-      // Alright so I saw this in the Rev example code and wasn't sure why they were converting the
-      // speeds to
-      // polar coordinates until I tried to do it myself. Here's the explanation because I and
-      // others will probably forget.
-      // The way slew rate limiters work is by keeping track of the past values of a variable and
-      // limiting the rate of change.
-      // You cannot have a two variable rate limiter (well you could but whatever), so by
-      // determining the polar coordinates of the speeds
-      // (r and theta, distance and angle or in this context speed and direction),
-      // You can later undo it using trigonometry but combine the variables into one so that you can
-      // limit the rates equally as well as limiting direction change.
-      double translationDirection =
-          Math.atan2(
-              discreteSpeeds.vyMetersPerSecond,
-              discreteSpeeds
-                  .vxMetersPerSecond); // This is the omega direction in radians of the polar
-      // coordinates
-      double translationMagnitude =
-          Math.hypot(
-              discreteSpeeds.vxMetersPerSecond,
-              discreteSpeeds
-                  .vyMetersPerSecond); // This is the r value of the polar coordinates, calculated
-      // using the distance formula from the origin (hypoteneuse).
-
-      double directionSlewRate;
-      if (currentTranslationMag != 0.0) {
-        directionSlewRate = Math.abs(kDirectionSlewRate / currentTranslationMag);
-      } else {
-        directionSlewRate =
-            500.0; // some high number that means the slew rate is effectively instantaneous
-      }
-
-      double currentTime = WPIUtilJNI.now() * 1e-6;
-      double elapsedTime = currentTime - prevTime;
-
-      double angleDif = SwerveUtils.angleDifference(translationDirection, currentTranslationDir);
-
-      if (angleDif < 0.45 * Math.PI) {
-        currentTranslationDir =
-            SwerveUtils.stepTowardsCircular(
-                currentTranslationDir, translationDirection, directionSlewRate * elapsedTime);
-        currentTranslationMag = magLimiter.calculate(translationMagnitude);
-      } else if (angleDif > 0.85 * Math.PI) {
-        if (currentTranslationMag
-            > 1e-4) { // some small number to avoid floating-point errors with equality checking
-          // keep currentTranslationDirection unchanged
-          currentTranslationMag = magLimiter.calculate(0.0);
-        } else {
-          currentTranslationDir = SwerveUtils.wrapAngle(currentTranslationDir + Math.PI);
-          currentTranslationMag = magLimiter.calculate(translationMagnitude);
-        }
-      } else {
-        currentTranslationDir =
-            SwerveUtils.stepTowardsCircular(
-                translationMagnitude, translationDirection, directionSlewRate * elapsedTime);
-        currentTranslationMag = magLimiter.calculate(0.0);
-      }
-
-      prevTime = currentTime;
-
-      discreteSpeeds.vxMetersPerSecond = currentTranslationMag * Math.cos(currentTranslationDir);
-      discreteSpeeds.vyMetersPerSecond = currentTranslationMag * Math.sin(currentTranslationDir);
-      discreteSpeeds.omegaRadiansPerSecond =
-          rotLimiter.calculate(discreteSpeeds.omegaRadiansPerSecond);
+      discreteSpeeds = calculateSlewRate(discreteSpeeds);
     }
 
     SwerveModuleState[] setpointStates =
@@ -358,6 +307,68 @@ public class Drive extends SubsystemBase implements AutoCloseable {
    */
   public void runVelocity(ChassisSpeeds speeds) {
     runVelocity(speeds, new Translation2d(), false);
+  }
+
+  /** Calculate the applied slew rate based on the current ChassisSpeeds */
+  public ChassisSpeeds calculateSlewRate(ChassisSpeeds speeds) {
+    // Alright so I saw this in the Rev example code and wasn't sure why they were converting the
+    // speeds to
+    // polar coordinates until I tried to do it myself. Here's the explanation because I and
+    // others will probably forget.
+    // The way slew rate limiters work is by keeping track of the past values of a variable and
+    // limiting the rate of change.
+    // You cannot have a two variable rate limiter (well you could but whatever), so by
+    // determining the polar coordinates of the speeds
+    // (r and theta, distance and angle or in this context speed and direction),
+    // You can later undo it using trigonometry but combine the variables into one so that you can
+    // limit the rates equally as well as limiting direction change.
+
+    // This is the omega direction in radians of the polar coordinates
+    double translationDirection = Math.atan2(speeds.vyMetersPerSecond, speeds.vxMetersPerSecond);
+
+    // This is the r magnitude of the polar coordinates
+    double translationMagnitude = Math.hypot(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond);
+
+    double directionSlewRate;
+    if (currentTranslationMag != 0.0) {
+      directionSlewRate = Math.abs(kDirectionSlewRate / currentTranslationMag);
+    } else {
+      directionSlewRate =
+          500.0; // some high number that means the slew rate is effectively instantaneous
+    }
+
+    double currentTime = WPIUtilJNI.now() * 1e-6;
+    double elapsedTime = currentTime - prevTime;
+
+    double angleDif = SwerveUtils.angleDifference(translationDirection, currentTranslationDir);
+
+    if (angleDif < 0.45 * Math.PI) {
+      currentTranslationDir =
+          SwerveUtils.stepTowardsCircular(
+              currentTranslationDir, translationDirection, directionSlewRate * elapsedTime);
+      currentTranslationMag = magLimiter.calculate(translationMagnitude);
+    } else if (angleDif > 0.85 * Math.PI) {
+      // No change in direction, this is just to avoid floating-point errors
+      if (currentTranslationMag > 1e-4) {
+        currentTranslationMag = magLimiter.calculate(0.0);
+      } else {
+        currentTranslationDir = SwerveUtils.wrapAngle(currentTranslationDir + Math.PI);
+        currentTranslationMag = magLimiter.calculate(translationMagnitude);
+      }
+    } else {
+      currentTranslationDir =
+          SwerveUtils.stepTowardsCircular(
+              translationMagnitude, translationDirection, directionSlewRate * elapsedTime);
+      currentTranslationMag = magLimiter.calculate(0.0);
+    }
+
+    prevTime = currentTime;
+
+    speeds.vxMetersPerSecond = currentTranslationMag * Math.cos(currentTranslationDir);
+    speeds.vyMetersPerSecond = currentTranslationMag * Math.sin(currentTranslationDir);
+    speeds.omegaRadiansPerSecond = rotLimiter.calculate(speeds.omegaRadiansPerSecond);
+
+    return speeds;
   }
 
   /** Pathfind to the starting point and then follow a path (PathPlanner or Choreo) */
@@ -430,6 +441,16 @@ public class Drive extends SubsystemBase implements AutoCloseable {
     return states;
   }
 
+  /** Returns the module positions (turn angles and drive positions) for all of the modules. */
+  @AutoLogOutput(key = "SwerveStates/MeasuredPositions")
+  public SwerveModulePosition[] getModulePositions() {
+    SwerveModulePosition[] positions = new SwerveModulePosition[4];
+    for (int i = 0; i < 4; i++) {
+      positions[i] = modules[i].getPosition();
+    }
+    return positions;
+  }
+
   /** Returns the current odometry pose. */
   @AutoLogOutput(key = "Odometry/Robot")
   public Pose2d getPose() {
@@ -455,6 +476,7 @@ public class Drive extends SubsystemBase implements AutoCloseable {
     }
     estimator.resetPosition(lastGyroRotation, positions, pose);
     this.pose = pose;
+    gyroOffset = lastGyroRotation.minus(pose.getRotation());
     RobotState.getCurrentRobotState().currentPose = pose;
   }
 

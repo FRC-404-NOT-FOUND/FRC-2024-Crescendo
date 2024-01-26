@@ -39,8 +39,8 @@ import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
  */
 public class RobotContainer {
   // Subsystems
-  private final Drive drive;
-  private final Vision vision;
+  public final Drive drive;
+  public final Vision vision;
 
   // Controller
   private final DriverOI oi = new DriverOIXBox();

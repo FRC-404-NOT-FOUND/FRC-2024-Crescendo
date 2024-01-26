@@ -83,12 +83,12 @@ public final class Constants {
     public static final TunableNumber kTurnD = new TunableNumber("Turn kD", 0.0);
 
     public static final TunableNumber kDriveSimS = new TunableNumber("Drive Sim kS", 0.0);
-    public static final TunableNumber kDriveSimV = new TunableNumber("Drive Sim kV", 0.13);
-    public static final TunableNumber kDriveSimP = new TunableNumber("Drive Sim kP", 0.1);
+    public static final TunableNumber kDriveSimV = new TunableNumber("Drive Sim kV", 0.0);
+    public static final TunableNumber kDriveSimP = new TunableNumber("Drive Sim kP", 0.0);
     public static final TunableNumber kDriveSimI = new TunableNumber("Drive Sim kI", 0.0);
     public static final TunableNumber kDriveSimD = new TunableNumber("Drive Sim kD", 0.0);
 
-    public static final TunableNumber kTurnSimP = new TunableNumber("Turn Sim kP", 10.0);
+    public static final TunableNumber kTurnSimP = new TunableNumber("Turn Sim kP", 0.0);
     public static final TunableNumber kTurnSimI = new TunableNumber("Turn Sim kI", 0.0);
     public static final TunableNumber kTurnSimD = new TunableNumber("Turn Sim kD", 0.0);
 

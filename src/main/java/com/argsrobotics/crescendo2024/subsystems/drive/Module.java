@@ -21,6 +21,8 @@ import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.wpilibj.Timer;
+import java.util.Queue;
 import org.littletonrobotics.junction.Logger;
 
 public class Module implements AutoCloseable {
@@ -36,6 +38,10 @@ public class Module implements AutoCloseable {
   private Rotation2d turnRelativeOffset = null; // Relative + Offset = Absolute
   private double lastPositionMeters = 0.0; // Used for delta calculation
   private SwerveModulePosition[] positionDeltas = new SwerveModulePosition[] {};
+
+  private Queue<Double> timestampQueue =
+      SparkMaxOdometryThread.getInstance().registerSignal(() -> Timer.getFPGATimestamp());
+  private double[] timestamps = new double[] {};
 
   public Module(ModuleIO io, int index) {
     this.io = io;
@@ -118,6 +124,9 @@ public class Module implements AutoCloseable {
                 + driveFeedback.calculate(inputs.driveVelocityRadPerSec, velocityRadPerSec));
       }
     }
+
+    // Update timestamps for better odometry readings
+    timestamps = timestampQueue.stream().mapToDouble(x -> x).toArray();
 
     // Calculate position deltas for odometry
     int deltaCount =
@@ -204,6 +213,11 @@ public class Module implements AutoCloseable {
   /** Returns the module position deltas received this cycle. */
   public SwerveModulePosition[] getPositionDeltas() {
     return positionDeltas;
+  }
+
+  /** Gets the timestamps for the position deltas for better odometry readings. */
+  public double[] getPositionDeltaTimestamps() {
+    return timestamps;
   }
 
   /** Returns the drive velocity in radians/sec. */
