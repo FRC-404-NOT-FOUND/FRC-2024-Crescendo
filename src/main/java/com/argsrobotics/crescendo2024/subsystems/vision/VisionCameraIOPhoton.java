@@ -13,8 +13,8 @@
 
 package com.argsrobotics.crescendo2024.subsystems.vision;
 
+import com.argsrobotics.crescendo2024.FieldConstants;
 import com.argsrobotics.crescendo2024.RobotState;
-import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import java.util.Optional;
@@ -32,7 +32,7 @@ public class VisionCameraIOPhoton implements VisionCameraIO {
     camera = new PhotonCamera(cameraName);
     estimator =
         new PhotonPoseEstimator(
-            AprilTagFields.k2024Crescendo.loadAprilTagLayoutField(),
+            FieldConstants.aprilTags,
             PhotonPoseEstimator.PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR,
             camera,
             cameraTranslation);
@@ -66,13 +66,19 @@ public class VisionCameraIOPhoton implements VisionCameraIO {
       inputs.hasEstimatedPose = pose.isPresent();
       pose.ifPresent(p -> inputs.estimatedPose = p.estimatedPose.toPose2d());
     } else {
+      inputs.estimatedPose = null;
+      inputs.hasEstimatedPose = false;
       inputs.hasTarget = result.hasTargets();
+      if (!inputs.hasTarget) {
+        inputs.estimatedTargetPose = null;
+        return;
+      }
+
       inputs.estimatedTargetPose =
           new Pose3d(RobotState.getCurrentRobotState().currentPose)
               .transformBy(cameraTranslation)
               .transformBy(result.getBestTarget().getBestCameraToTarget())
               .toPose2d();
-      inputs.hasEstimatedPose = false;
     }
   }
 

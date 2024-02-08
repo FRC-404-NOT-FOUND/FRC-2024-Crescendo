@@ -106,6 +106,18 @@ public class Vision extends SubsystemBase {
   }
 
   /**
+   * Sets all camera modes
+   *
+   * @param modes the modes to set
+   * @return
+   */
+  public void setModes(Mode[] modes) {
+    for (int i = 0; i < cameraNames.length; i++) {
+      cameras[i].setMode(modes[i]);
+    }
+  }
+
+  /**
    * Retrieves the mode of a camera with the specified name.
    *
    * @param name the name of the camera

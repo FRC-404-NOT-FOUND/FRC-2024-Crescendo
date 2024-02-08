@@ -13,8 +13,8 @@
 
 package com.argsrobotics.crescendo2024.subsystems.vision;
 
+import com.argsrobotics.crescendo2024.FieldConstants;
 import com.argsrobotics.crescendo2024.RobotState;
-import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Transform3d;
 import org.photonvision.PhotonCamera;
 import org.photonvision.PhotonPoseEstimator;
@@ -34,13 +34,13 @@ public class VisionCameraIOPhotonSim implements VisionCameraIO {
   public VisionCameraIOPhotonSim(String cameraName, Transform3d cameraTranslation) {
     // this.cameraTranslation = cameraTranslation;
 
-    sim.addAprilTags(AprilTagFields.k2024Crescendo.loadAprilTagLayoutField());
+    sim.addAprilTags(FieldConstants.aprilTags);
     camera = new PhotonCamera(cameraName);
     simCamera = new PhotonCameraSim(camera, properties);
     sim.addCamera(simCamera, cameraTranslation);
     estimator =
         new PhotonPoseEstimator(
-            AprilTagFields.k2024Crescendo.loadAprilTagLayoutField(),
+            FieldConstants.aprilTags,
             PhotonPoseEstimator.PoseStrategy.CLOSEST_TO_REFERENCE_POSE,
             camera,
             cameraTranslation);

@@ -378,6 +378,12 @@ public class Drive extends SubsystemBase implements AutoCloseable {
     if (path == null) {
       path = PathPlannerPath.fromPathFile(pathname);
     }
+
+    return followPath(path);
+  }
+
+  /** Pathfind to the starting point and then follow a path (PathPlanner or Choreo) */
+  public Command followPath(PathPlannerPath path) {
     return AutoBuilder.pathfindThenFollowPath(
         path,
         new PathConstraints(
