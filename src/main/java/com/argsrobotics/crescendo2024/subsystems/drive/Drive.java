@@ -49,6 +49,9 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.units.Measure;
+import edu.wpi.first.units.Units;
+import edu.wpi.first.units.Voltage;
 import edu.wpi.first.util.WPIUtilJNI;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
@@ -421,11 +424,16 @@ public class Drive extends SubsystemBase implements AutoCloseable {
     stop();
   }
 
-  /** Runs forwards at the commanded voltage. */
+  /** Runs at the commanded voltage. */
   public void runCharacterizationVolts(double volts) {
     for (int i = 0; i < 4; i++) {
       modules[i].runCharacterization(volts);
     }
+  }
+
+  /** Runs at the commanded voltage */
+  public void runCharacterizationVolts(Measure<Voltage> volts) {
+    runCharacterizationVolts(volts.in(Units.Volts));
   }
 
   /** Returns the average drive velocity in radians/sec. */

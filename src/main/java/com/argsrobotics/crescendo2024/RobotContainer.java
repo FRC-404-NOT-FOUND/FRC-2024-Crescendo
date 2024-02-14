@@ -13,6 +13,7 @@
 
 package com.argsrobotics.crescendo2024;
 
+import com.argsrobotics.crescendo2024.commands.DriveCharacterization;
 import com.argsrobotics.crescendo2024.commands.DriveCommands;
 import com.argsrobotics.crescendo2024.commands.FeedForwardCharacterization;
 import com.argsrobotics.crescendo2024.oi.DriverOI;
@@ -117,6 +118,11 @@ public class RobotContainer {
         "Drive FF Characterization",
         new FeedForwardCharacterization(
             drive, drive::runCharacterizationVolts, drive::getCharacterizationVelocity));
+
+    autoChooser.addOption(
+        "Drive SysId Characterization",
+        new DriveCharacterization(drive)); // Try this instead of previous
+
     // Configure the button bindings
     configureButtonBindings();
   }
