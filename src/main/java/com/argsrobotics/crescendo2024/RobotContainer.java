@@ -13,11 +13,17 @@
 
 package com.argsrobotics.crescendo2024;
 
+import static com.argsrobotics.crescendo2024.Constants.Arm.kLeftMotor;
+import static com.argsrobotics.crescendo2024.Constants.Arm.kRightMotor;
+
 import com.argsrobotics.crescendo2024.commands.DriveCharacterization;
 import com.argsrobotics.crescendo2024.commands.DriveCommands;
 import com.argsrobotics.crescendo2024.commands.FeedForwardCharacterization;
 import com.argsrobotics.crescendo2024.oi.DriverOI;
 import com.argsrobotics.crescendo2024.oi.DriverOIXBox;
+import com.argsrobotics.crescendo2024.subsystems.arm.Arm;
+import com.argsrobotics.crescendo2024.subsystems.arm.ArmIO;
+import com.argsrobotics.crescendo2024.subsystems.arm.ArmIONeo;
 import com.argsrobotics.crescendo2024.subsystems.drive.Drive;
 import com.argsrobotics.crescendo2024.subsystems.drive.GyroIO;
 import com.argsrobotics.crescendo2024.subsystems.drive.GyroIOADIS16448;
@@ -42,6 +48,7 @@ public class RobotContainer {
   // Subsystems
   public final Drive drive;
   public final Vision vision;
+  public final Arm arm;
 
   // Controller
   private final DriverOI oi = new DriverOIXBox();
@@ -68,6 +75,8 @@ public class RobotContainer {
                   {
                   }
                 });
+
+        arm = new Arm(new ArmIONeo(kLeftMotor, kRightMotor));
         break;
 
       case SIM:
@@ -86,6 +95,8 @@ public class RobotContainer {
                   {
                   }
                 });
+
+        arm = new Arm(new ArmIO() {});
         break;
 
       default:
@@ -104,11 +115,14 @@ public class RobotContainer {
                   {
                   }
                 });
+
+        arm = new Arm(new ArmIO() {});
         break;
     }
 
     RobotState.setDrivetrain(drive);
     RobotState.setVision(vision);
+    RobotState.setArm(arm);
 
     // Set up auto routines
     autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());

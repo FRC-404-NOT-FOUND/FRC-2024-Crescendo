@@ -107,4 +107,21 @@ public final class Constants {
     public static final TunableNumber kPathFollowRotationalD =
         new TunableNumber("Path Follow Rotational kD", 0.0);
   }
+
+  public static class Arm {
+    public static final TunableNumber kArmP = new TunableNumber("Arm kP", 0.0);
+    public static final TunableNumber kArmI = new TunableNumber("Arm kI", 0.0);
+    public static final TunableNumber kArmD = new TunableNumber("Arm kD", 0.0);
+    public static final TunableNumber kArmFF = new TunableNumber("Arm kFF", 0.0);
+
+    public static final double kZeroAngle = Units.degreesToRadians(-20.0);
+    public static final double kGearRatio = (100.0 / 1.0) * (5.0 / 3.0);
+
+    public static final double kAmpAngle = 0.0;
+    public static final double kClimbAngle = 0.0;
+    public static final double kSpeakerAngle = 0.0;
+
+    public static final int kLeftMotor = 11;
+    public static final int kRightMotor = 12;
+  }
 }
