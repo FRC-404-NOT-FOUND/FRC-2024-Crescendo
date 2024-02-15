@@ -17,9 +17,7 @@ import static com.argsrobotics.crescendo2024.Constants.Drive.kDriveDeadband;
 
 import com.argsrobotics.crescendo2024.subsystems.drive.Drive;
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -57,21 +55,13 @@ public class DriveCommands {
           linearMagnitude = linearMagnitude * linearMagnitude;
           omega = Math.copySign(omega * omega, omega);
 
-          // Calcaulate new linear velocity
-          Translation2d linearVelocity =
-              new Pose2d(new Translation2d(), linearDirection)
-                  .transformBy(new Transform2d(linearMagnitude, 0.0, new Rotation2d()))
-                  .getTranslation();
+          // Convert to chassis speeds and apply slew rate
+          ChassisSpeeds speeds = drive.calculateSlewRate(linearDirection.getRadians(), linearMagnitude, omega);
 
           // Convert to field relative speeds & send command
           drive.runVelocity(
-              ChassisSpeeds.fromFieldRelativeSpeeds(
-                  linearVelocity.getX() * drive.getMaxLinearSpeedMetersPerSec(),
-                  linearVelocity.getY() * drive.getMaxLinearSpeedMetersPerSec(),
-                  omega * drive.getMaxAngularSpeedRadPerSec(),
-                  drive.getRotation()),
-              centerOfRot,
-              true);
+              ChassisSpeeds.fromFieldRelativeSpeeds(speeds, drive.getRotation()),
+              centerOfRot);
         },
         drive);
   }

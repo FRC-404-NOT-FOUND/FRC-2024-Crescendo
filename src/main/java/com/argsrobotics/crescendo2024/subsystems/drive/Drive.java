@@ -277,13 +277,9 @@ public class Drive extends SubsystemBase implements AutoCloseable {
    * @param centerOfRot Center of rotation of the robot in meters
    * @param rateLimited Whether to use rate limiting
    */
-  public void runVelocity(ChassisSpeeds speeds, Translation2d centerOfRot, boolean rateLimited) {
+  public void runVelocity(ChassisSpeeds speeds, Translation2d centerOfRot) {
     // Calculate module setpoints
     ChassisSpeeds discreteSpeeds = ChassisSpeeds.discretize(speeds, 0.02);
-
-    if (rateLimited) {
-      discreteSpeeds = calculateSlewRate(discreteSpeeds);
-    }
 
     SwerveModuleState[] setpointStates =
         kinematics.toSwerveModuleStates(discreteSpeeds, centerOfRot);
@@ -309,11 +305,11 @@ public class Drive extends SubsystemBase implements AutoCloseable {
    * @param speeds
    */
   public void runVelocity(ChassisSpeeds speeds) {
-    runVelocity(speeds, new Translation2d(), false);
+    runVelocity(speeds, new Translation2d());
   }
 
   /** Calculate the applied slew rate based on the current ChassisSpeeds */
-  public ChassisSpeeds calculateSlewRate(ChassisSpeeds speeds) {
+  public ChassisSpeeds calculateSlewRate(double translationDirection, double translationMagnitude, double omega) {
     // Alright so I saw this in the Rev example code and wasn't sure why they were converting the
     // speeds to
     // polar coordinates until I tried to do it myself. Here's the explanation because I and
@@ -325,12 +321,6 @@ public class Drive extends SubsystemBase implements AutoCloseable {
     // (r and theta, distance and angle or in this context speed and direction),
     // You can later undo it using trigonometry but combine the variables into one so that you can
     // limit the rates equally as well as limiting direction change.
-
-    // This is the omega direction in radians of the polar coordinates
-    double translationDirection = Math.atan2(speeds.vyMetersPerSecond, speeds.vxMetersPerSecond);
-
-    // This is the r magnitude of the polar coordinates
-    double translationMagnitude = Math.hypot(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond);
 
     double directionSlewRate;
     if (currentTranslationMag != 0.0) {
@@ -367,9 +357,10 @@ public class Drive extends SubsystemBase implements AutoCloseable {
 
     prevTime = currentTime;
 
-    speeds.vxMetersPerSecond = currentTranslationMag * Math.cos(currentTranslationDir);
-    speeds.vyMetersPerSecond = currentTranslationMag * Math.sin(currentTranslationDir);
-    speeds.omegaRadiansPerSecond = rotLimiter.calculate(speeds.omegaRadiansPerSecond);
+    ChassisSpeeds speeds = new ChassisSpeeds();
+    speeds.vxMetersPerSecond = currentTranslationMag * Math.cos(currentTranslationDir) * getMaxLinearSpeedMetersPerSec();
+    speeds.vyMetersPerSecond = currentTranslationMag * Math.sin(currentTranslationDir) * getMaxLinearSpeedMetersPerSec();
+    speeds.omegaRadiansPerSecond = rotLimiter.calculate(omega) * getMaxAngularSpeedRadPerSec();
 
     return speeds;
   }
