@@ -14,6 +14,7 @@
 package com.argsrobotics.crescendo2024.subsystems.drive;
 
 import static com.argsrobotics.crescendo2024.Constants.Drive.kDirectionSlewRate;
+import static com.argsrobotics.crescendo2024.Constants.Drive.kDriftRate;
 import static com.argsrobotics.crescendo2024.Constants.Drive.kDrivebaseRadius;
 import static com.argsrobotics.crescendo2024.Constants.Drive.kMagnitudeSlewRate;
 import static com.argsrobotics.crescendo2024.Constants.Drive.kMaxAngularSpeed;
@@ -27,8 +28,10 @@ import static com.argsrobotics.crescendo2024.Constants.Drive.kPathFollowRotation
 import static com.argsrobotics.crescendo2024.Constants.Drive.kRotationalSlewRate;
 import static com.argsrobotics.crescendo2024.Constants.Drive.kTrackWidthX;
 import static com.argsrobotics.crescendo2024.Constants.Drive.kTrackWidthY;
+import static com.argsrobotics.crescendo2024.Constants.kTuningMode;
 
 import com.argsrobotics.crescendo2024.RobotState;
+import com.argsrobotics.crescendo2024.util.ChassisSpeedsUtils;
 import com.argsrobotics.crescendo2024.util.LocalADStarAK;
 import com.argsrobotics.crescendo2024.util.SwerveUtils;
 import com.pathplanner.lib.auto.AutoBuilder;
@@ -88,6 +91,8 @@ public class Drive extends SubsystemBase implements AutoCloseable {
   private double prevTime = WPIUtilJNI.now() * 1e-6;
   private double currentTranslationDir = 0.0;
   private double currentTranslationMag = 0.0;
+
+  private double driftRate = kDriftRate.get();
 
   private final Field2d field = new Field2d();
 
@@ -152,6 +157,10 @@ public class Drive extends SubsystemBase implements AutoCloseable {
   }
 
   public void periodic() {
+    if (kTuningMode) {
+      driftRate = kDriftRate.get();
+    }
+
     updateOdometry();
 
     for (var module : modules) {
@@ -168,39 +177,6 @@ public class Drive extends SubsystemBase implements AutoCloseable {
       Logger.recordOutput("SwerveStates/Setpoints", new SwerveModuleState[] {});
       Logger.recordOutput("SwerveStates/SetpointsOptimized", new SwerveModuleState[] {});
     }
-
-    // This is the default AdvantageKit implementation with no vision support. I've left it here
-    // just in case
-    // but we can easily use the SwerveDrivePoseEstimator to get the same job done with less work.
-    //
-    // // Update odometry
-    // int deltaCount =
-    //     gyroInputs.connected ? gyroInputs.odometryYawPositions.length : Integer.MAX_VALUE;
-    // for (int i = 0; i < 4; i++) {
-    //   deltaCount = Math.min(deltaCount, modules[i].getPositionDeltas().length);
-    // }
-    // for (int deltaIndex = 0; deltaIndex < deltaCount; deltaIndex++) {
-    //   // Read wheel deltas from each module
-    //   SwerveModulePosition[] wheelDeltas = new SwerveModulePosition[4];
-    //   for (int moduleIndex = 0; moduleIndex < 4; moduleIndex++) {
-    //     wheelDeltas[moduleIndex] = modules[moduleIndex].getPositionDeltas()[deltaIndex];
-    //   }
-
-    //   // The twist represents the motion of the robot since the last
-    //   // sample in x, y, and theta based only on the modules, without
-    //   // the gyro. The gyro is always disconnected in simulation.
-    //   var twist = kinematics.toTwist2d(wheelDeltas);
-    //   if (gyroInputs.connected) {
-    //     // If the gyro is connected, replace the theta component of the twist
-    //     // with the change in angle since the last sample.
-    //     Rotation2d gyroRotation = gyroInputs.odometryYawPositions[deltaIndex];
-    //     twist = new Twist2d(twist.dx, twist.dy,
-    // gyroRotation.minus(lastGyroRotation).getRadians());
-    //     lastGyroRotation = gyroRotation;
-    //   }
-    //   // Apply the twist (change since last sample) to the current pose
-    //   pose = pose.exp(twist);
-    // }
 
     int deltaCount =
         gyroInputs.connected ? gyroInputs.odometryYawPositions.length : Integer.MAX_VALUE;
@@ -279,7 +255,7 @@ public class Drive extends SubsystemBase implements AutoCloseable {
    */
   public void runVelocity(ChassisSpeeds speeds, Translation2d centerOfRot) {
     // Calculate module setpoints
-    ChassisSpeeds discreteSpeeds = ChassisSpeeds.discretize(speeds, 0.02);
+    ChassisSpeeds discreteSpeeds = ChassisSpeedsUtils.discretize(speeds, 0.02, driftRate);
 
     SwerveModuleState[] setpointStates =
         kinematics.toSwerveModuleStates(discreteSpeeds, centerOfRot);
@@ -309,7 +285,8 @@ public class Drive extends SubsystemBase implements AutoCloseable {
   }
 
   /** Calculate the applied slew rate based on the current ChassisSpeeds */
-  public ChassisSpeeds calculateSlewRate(double translationDirection, double translationMagnitude, double omega) {
+  public ChassisSpeeds calculateSlewRate(
+      double translationDirection, double translationMagnitude, double omega) {
     // Alright so I saw this in the Rev example code and wasn't sure why they were converting the
     // speeds to
     // polar coordinates until I tried to do it myself. Here's the explanation because I and
@@ -358,8 +335,10 @@ public class Drive extends SubsystemBase implements AutoCloseable {
     prevTime = currentTime;
 
     ChassisSpeeds speeds = new ChassisSpeeds();
-    speeds.vxMetersPerSecond = currentTranslationMag * Math.cos(currentTranslationDir) * getMaxLinearSpeedMetersPerSec();
-    speeds.vyMetersPerSecond = currentTranslationMag * Math.sin(currentTranslationDir) * getMaxLinearSpeedMetersPerSec();
+    speeds.vxMetersPerSecond =
+        currentTranslationMag * Math.cos(currentTranslationDir) * getMaxLinearSpeedMetersPerSec();
+    speeds.vyMetersPerSecond =
+        currentTranslationMag * Math.sin(currentTranslationDir) * getMaxLinearSpeedMetersPerSec();
     speeds.omegaRadiansPerSecond = rotLimiter.calculate(omega) * getMaxAngularSpeedRadPerSec();
 
     return speeds;

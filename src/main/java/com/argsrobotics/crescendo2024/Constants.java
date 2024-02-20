@@ -71,6 +71,12 @@ public final class Constants {
     public static final double kDirectionSlewRate = 1.2; // rad/sec
     public static final double kRotationalSlewRate = 2.0 * kMaxAngularSpeed; // rad/sec^2
 
+    // Drift rate is the tuned number that represents the rotational drift rate of the robot while
+    // turning and driving straight simulatneously. This provides a simple alternative to using
+    // second-order kinematics to determine the necessary speeds for the robot without drifting in
+    // the direction of rotation.
+    public static final TunableNumber kDriftRate = new TunableNumber("Drive Drift Rate", 1);
+
     // PID/FF constants
     public static final TunableNumber kDriveS = new TunableNumber("Drive kS", 0.1);
     public static final TunableNumber kDriveV = new TunableNumber("Drive kV", 0.13);

@@ -56,12 +56,12 @@ public class DriveCommands {
           omega = Math.copySign(omega * omega, omega);
 
           // Convert to chassis speeds and apply slew rate
-          ChassisSpeeds speeds = drive.calculateSlewRate(linearDirection.getRadians(), linearMagnitude, omega);
+          ChassisSpeeds speeds =
+              drive.calculateSlewRate(linearDirection.getRadians(), linearMagnitude, omega);
 
           // Convert to field relative speeds & send command
           drive.runVelocity(
-              ChassisSpeeds.fromFieldRelativeSpeeds(speeds, drive.getRotation()),
-              centerOfRot);
+              ChassisSpeeds.fromFieldRelativeSpeeds(speeds, drive.getRotation()), centerOfRot);
         },
         drive);
   }
