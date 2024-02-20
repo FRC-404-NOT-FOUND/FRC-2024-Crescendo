@@ -78,6 +78,11 @@ public class ModuleIOSim implements ModuleIO {
   }
 
   @Override
+  public double getAngularOffset() {
+    return 0.0;
+  }
+
+  @Override
   public void setDriveVoltage(double volts) {
     driveAppliedVolts = MathUtil.clamp(volts, -12.0, 12.0);
   }

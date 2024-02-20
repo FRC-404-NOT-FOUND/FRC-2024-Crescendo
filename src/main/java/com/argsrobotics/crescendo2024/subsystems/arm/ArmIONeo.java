@@ -26,21 +26,22 @@ public class ArmIONeo implements ArmIO {
   private final CANSparkMax leftMotor;
   private final CANSparkMax rightMotor;
   private final RelativeEncoder encoder;
-  private final SparkPIDController pidController;
+  private final SparkPIDController leftPidController;
+  private final SparkPIDController rightPidController;
 
-  private Double positionSetpoint;
+  private double ff = kArmFF.get();
+
+  private Double positionSetpoint = null;
 
   public ArmIONeo(int left, int right) {
     leftMotor = new CANSparkMax(left, MotorType.kBrushless);
-    rightMotor = new CANSparkMax(left, MotorType.kBrushless);
-
-    leftMotor.follow(rightMotor);
+    rightMotor = new CANSparkMax(right, MotorType.kBrushless);
 
     leftMotor.restoreFactoryDefaults();
     rightMotor.restoreFactoryDefaults();
 
-    leftMotor.setInverted(true);
-    rightMotor.setInverted(false);
+    leftMotor.setInverted(false);
+    rightMotor.setInverted(true);
 
     leftMotor.setCANTimeout(250);
     rightMotor.setCANTimeout(250);
@@ -55,12 +56,17 @@ public class ArmIONeo implements ArmIO {
     encoder.setMeasurementPeriod(10);
     encoder.setAverageDepth(2);
 
-    pidController = leftMotor.getPIDController();
+    leftPidController = leftMotor.getPIDController();
+    rightPidController = rightMotor.getPIDController();
 
-    pidController.setP(kArmP.get());
-    pidController.setI(kArmI.get());
-    pidController.setD(kArmD.get());
-    pidController.setFF(kArmFF.get());
+    leftPidController.setP(kArmP.get());
+    leftPidController.setI(kArmI.get());
+    leftPidController.setD(kArmD.get());
+    leftPidController.setFF(kArmFF.get());
+    rightPidController.setP(kArmP.get());
+    rightPidController.setI(kArmI.get());
+    rightPidController.setD(kArmD.get());
+    rightPidController.setFF(kArmFF.get());
 
     leftMotor.setCANTimeout(0);
     rightMotor.setCANTimeout(0);
@@ -72,17 +78,21 @@ public class ArmIONeo implements ArmIO {
   @Override
   public void updateInputs(ArmIOInputs inputs) {
     if (kTuningMode) {
-      pidController.setP(kArmP.get());
-      pidController.setI(kArmI.get());
-      pidController.setD(kArmD.get());
-      pidController.setFF(kArmFF.get());
+      leftPidController.setP(kArmP.get());
+      leftPidController.setI(kArmI.get());
+      leftPidController.setD(kArmD.get());
+      rightPidController.setP(kArmP.get());
+      rightPidController.setI(kArmI.get());
+      rightPidController.setD(kArmD.get());
+      ff = kArmFF.get();
     }
 
     if (positionSetpoint != null) {
-      pidController.setReference(positionSetpoint, CANSparkBase.ControlType.kPosition);
+      leftPidController.setFF((Math.cos(positionSetpoint) * ff) / positionSetpoint);
+      leftPidController.setReference(positionSetpoint, CANSparkBase.ControlType.kPosition);
+      rightPidController.setReference(positionSetpoint, CANSparkBase.ControlType.kPosition);
     }
 
-    inputs.setpoint = positionSetpoint;
     inputs.position = encoder.getPosition();
     inputs.velocity = encoder.getVelocity();
     inputs.current = leftMotor.getOutputCurrent();
@@ -90,12 +100,13 @@ public class ArmIONeo implements ArmIO {
   }
 
   @Override
-  public void setPosition(double position) {
+  public void setPosition(Double position) {
     positionSetpoint = position;
   }
 
   @Override
   public void setPercent(double percent) {
+    positionSetpoint = null;
     leftMotor.set(percent);
     rightMotor.set(percent);
   }

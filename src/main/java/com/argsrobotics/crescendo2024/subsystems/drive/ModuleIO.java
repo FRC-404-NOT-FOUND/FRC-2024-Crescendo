@@ -37,6 +37,11 @@ public interface ModuleIO extends AutoCloseable {
   /** Updates the set of loggable inputs. */
   public default void updateInputs(ModuleIOInputs inputs) {}
 
+  /** Gets the absolute offset of the turn motors. */
+  public default double getAngularOffset() {
+    return 0.0;
+  }
+
   /** Run the drive motor at the specified voltage. */
   public default void setDriveVoltage(double volts) {}
 

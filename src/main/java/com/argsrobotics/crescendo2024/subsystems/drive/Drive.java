@@ -163,8 +163,11 @@ public class Drive extends SubsystemBase implements AutoCloseable {
 
     updateOdometry();
 
-    for (var module : modules) {
-      module.periodic();
+    for (int i = 0; i < modules.length; i++) {
+      modules[i].periodic();
+      Logger.recordOutput(
+          "SwerveStates/Module" + i + "Velocity", modules[i].getVelocityMetersPerSec());
+      Logger.recordOutput("SwerveStates/Module" + i + "Angle", modules[i].getAngle().getDegrees());
     }
 
     if (RobotBase.isReal() && DriverStation.isDisabled()) {
@@ -246,6 +249,12 @@ public class Drive extends SubsystemBase implements AutoCloseable {
     Logger.processInputs("Drive/Gyro", gyroInputs);
   }
 
+  public void runSetpoint(double velocity, Rotation2d angle) {
+    for (var module : modules) {
+      module.runSetpoint(new SwerveModuleState(velocity, angle));
+    }
+  }
+
   /**
    * Runs the drive at the desired velocity.
    *
@@ -264,6 +273,7 @@ public class Drive extends SubsystemBase implements AutoCloseable {
     // Send setpoints to modules
     SwerveModuleState[] optimizedSetpointStates = new SwerveModuleState[4];
     for (int i = 0; i < 4; i++) {
+      setpointStates[i].angle = setpointStates[i].angle.plus(modules[i].getAngularOffset());
       // The module returns the optimized state, useful for logging
       optimizedSetpointStates[i] = modules[i].runSetpoint(setpointStates[i]);
     }

@@ -15,6 +15,10 @@ package com.argsrobotics.crescendo2024;
 
 import static com.argsrobotics.crescendo2024.Constants.Arm.kLeftMotor;
 import static com.argsrobotics.crescendo2024.Constants.Arm.kRightMotor;
+import static com.argsrobotics.crescendo2024.Constants.Drive.kBackLeftChassisAngularOffset;
+import static com.argsrobotics.crescendo2024.Constants.Drive.kBackRightChassisAngularOffset;
+import static com.argsrobotics.crescendo2024.Constants.Drive.kFrontLeftChassisAngularOffset;
+import static com.argsrobotics.crescendo2024.Constants.Drive.kFrontRightChassisAngularOffset;
 
 import com.argsrobotics.crescendo2024.commands.DriveCharacterization;
 import com.argsrobotics.crescendo2024.commands.DriveCommands;
@@ -64,10 +68,10 @@ public class RobotContainer {
         drive =
             new Drive(
                 new GyroIOADIS16448(),
-                new ModuleIOSparkMax(0),
-                new ModuleIOSparkMax(1),
-                new ModuleIOSparkMax(2),
-                new ModuleIOSparkMax(3));
+                new ModuleIOSparkMax(0, kFrontLeftChassisAngularOffset),
+                new ModuleIOSparkMax(1, kFrontRightChassisAngularOffset),
+                new ModuleIOSparkMax(2, kBackLeftChassisAngularOffset),
+                new ModuleIOSparkMax(3, kBackRightChassisAngularOffset));
 
         vision =
             new Vision(
@@ -156,16 +160,12 @@ public class RobotContainer {
             oi::getDriveZ,
             oi::getCenterOfRotationX,
             oi::getCenterOfRotationY));
-    // controller.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
-    // controller
-    //     .b()
-    //     .onTrue(
-    //         Commands.runOnce(
-    //                 () ->
-    //                     drive.setPose(
-    //                         new Pose2d(drive.getPose().getTranslation(), new Rotation2d())),
-    //                 drive)
-    //             .ignoringDisable(true));
+
+    // arm.setDefaultCommand(new TuneArmPID(arm));
+
+    oi.getArmUpEnabled().whileTrue(arm.setArmSpeed(oi::getArmUp));
+    oi.getArmDownEnabled().whileTrue(arm.setArmSpeed(oi::getArmDown));
+    // drive.setDefaultCommand(new TuneDrivePID(drive));
   }
 
   /**

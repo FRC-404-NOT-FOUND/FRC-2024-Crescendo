@@ -22,12 +22,11 @@ public interface ArmIO extends AutoCloseable {
     public double velocity;
     public double current;
     public double voltage;
-    public double setpoint;
   }
 
   public default void updateInputs(ArmIOInputs inputs) {}
 
-  public default void setPosition(double position) {}
+  public default void setPosition(Double position) {}
 
   public default void setPercent(double percent) {}
 

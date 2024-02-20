@@ -16,8 +16,9 @@ package com.argsrobotics.crescendo2024.subsystems.arm;
 import static com.argsrobotics.crescendo2024.Constants.Arm.kGearRatio;
 import static com.argsrobotics.crescendo2024.Constants.Arm.kZeroAngle;
 
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.wpilibj.RobotState;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import java.util.function.DoubleSupplier;
 import org.littletonrobotics.junction.AutoLogOutput;
@@ -36,7 +37,13 @@ public class Arm extends SubsystemBase implements AutoCloseable {
   public void periodic() {
     io.updateInputs(inputs);
 
+    if (RobotState.isDisabled()) {
+      io.setPercent(0);
+      io.setPosition(null);
+    }
+
     Logger.processInputs("Arm", inputs);
+    Logger.recordOutput("Arm/CurrentAngleDegrees", getAngle().getDegrees());
   }
 
   /**
@@ -44,8 +51,13 @@ public class Arm extends SubsystemBase implements AutoCloseable {
    *
    * @param angle the new angle to set
    */
-  public void setAngle(double angle) {
-    io.setPosition((angle - kZeroAngle) * kGearRatio);
+  public void setAngle(Rotation2d angle) {
+    if (angle.equals(kZeroAngle)) {
+      io.setPosition(
+          (angle.minus(kZeroAngle).plus(Rotation2d.fromDegrees(2))).getRotations() * kGearRatio);
+    } else {
+      io.setPosition((angle.minus(kZeroAngle)).getRotations() * kGearRatio);
+    }
   }
 
   /**
@@ -65,10 +77,7 @@ public class Arm extends SubsystemBase implements AutoCloseable {
    * @return the command for setting the arm speed
    */
   public Command setArmSpeed(DoubleSupplier speed) {
-    return Commands.either(
-        run(() -> setPercent(speed.getAsDouble())),
-        run(() -> setAngle(getAngle())),
-        () -> Math.abs(speed.getAsDouble()) > 0.1);
+    return runEnd(() -> setPercent(speed.getAsDouble()), () -> setPercent(0));
   }
 
   /**
@@ -77,7 +86,7 @@ public class Arm extends SubsystemBase implements AutoCloseable {
    * @param angle the angle to set the arm to
    * @return a Command object representing the set arm angle command
    */
-  public Command setArmAngle(double angle) {
+  public Command setArmAngle(Rotation2d angle) {
     return run(() -> setAngle(angle));
   }
 
@@ -87,8 +96,8 @@ public class Arm extends SubsystemBase implements AutoCloseable {
    * @return the resulting angle
    */
   @AutoLogOutput(key = "Arm/CurrentAngle")
-  public double getAngle() {
-    return (inputs.position / kGearRatio) + kZeroAngle;
+  public Rotation2d getAngle() {
+    return Rotation2d.fromRotations(inputs.position / kGearRatio).plus(kZeroAngle);
   }
 
   @Override

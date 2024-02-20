@@ -13,7 +13,9 @@
 
 package com.argsrobotics.crescendo2024.oi;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 
 public class DriverOIDualFlightStick implements DriverOI {
   private final CommandJoystick left;
@@ -51,5 +53,25 @@ public class DriverOIDualFlightStick implements DriverOI {
   @Override
   public double getCenterOfRotationY() {
     return right.getY();
+  }
+
+  @Override
+  public double getArmUp() {
+    return MathUtil.applyDeadband(right.getThrottle(), 0.1);
+  }
+
+  @Override
+  public double getArmDown() {
+    return -MathUtil.applyDeadband(left.getThrottle(), 0.1);
+  }
+
+  @Override
+  public Trigger getArmUpEnabled() {
+    return right.trigger();
+  }
+
+  @Override
+  public Trigger getArmDownEnabled() {
+    return left.trigger();
   }
 }

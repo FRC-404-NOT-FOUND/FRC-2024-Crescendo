@@ -14,6 +14,7 @@
 package com.argsrobotics.crescendo2024;
 
 import com.argsrobotics.crescendo2024.util.TunableNumber;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
 
 /**
@@ -42,6 +43,11 @@ public final class Constants {
 
   public static class Drive {
     public static final double kDriveDeadband = 0.1;
+
+    public static final double kFrontLeftChassisAngularOffset = -Math.PI / 2;
+    public static final double kFrontRightChassisAngularOffset = 0;
+    public static final double kBackLeftChassisAngularOffset = Math.PI;
+    public static final double kBackRightChassisAngularOffset = Math.PI / 2;
 
     public static final double kTrackWidthY = Units.inchesToMeters(28.0);
     public static final double kTrackWidthX = Units.inchesToMeters(28.0);
@@ -78,15 +84,15 @@ public final class Constants {
     public static final TunableNumber kDriftRate = new TunableNumber("Drive Drift Rate", 1);
 
     // PID/FF constants
-    public static final TunableNumber kDriveS = new TunableNumber("Drive kS", 0.1);
-    public static final TunableNumber kDriveV = new TunableNumber("Drive kV", 0.13);
-    public static final TunableNumber kDriveP = new TunableNumber("Drive kP", 0.05);
+    public static final TunableNumber kDriveS = new TunableNumber("Drive kS", 0.07067);
+    public static final TunableNumber kDriveV = new TunableNumber("Drive kV", 0.9445);
+    public static final TunableNumber kDriveP = new TunableNumber("Drive kP", 0.06);
     public static final TunableNumber kDriveI = new TunableNumber("Drive kI", 0.0);
-    public static final TunableNumber kDriveD = new TunableNumber("Drive kD", 0.0);
+    public static final TunableNumber kDriveD = new TunableNumber("Drive kD", 0.0001);
 
-    public static final TunableNumber kTurnP = new TunableNumber("Turn kP", 7.0);
+    public static final TunableNumber kTurnP = new TunableNumber("Turn kP", 0.7);
     public static final TunableNumber kTurnI = new TunableNumber("Turn kI", 0.0);
-    public static final TunableNumber kTurnD = new TunableNumber("Turn kD", 0.0);
+    public static final TunableNumber kTurnD = new TunableNumber("Turn kD", 0.1);
 
     public static final TunableNumber kDriveSimS = new TunableNumber("Drive Sim kS", 0.0);
     public static final TunableNumber kDriveSimV = new TunableNumber("Drive Sim kV", 0.0);
@@ -115,17 +121,17 @@ public final class Constants {
   }
 
   public static class Arm {
-    public static final TunableNumber kArmP = new TunableNumber("Arm kP", 0.0);
+    public static final TunableNumber kArmP = new TunableNumber("Arm kP", 0.6);
     public static final TunableNumber kArmI = new TunableNumber("Arm kI", 0.0);
-    public static final TunableNumber kArmD = new TunableNumber("Arm kD", 0.0);
+    public static final TunableNumber kArmD = new TunableNumber("Arm kD", 0.002);
     public static final TunableNumber kArmFF = new TunableNumber("Arm kFF", 0.0);
 
-    public static final double kZeroAngle = Units.degreesToRadians(-20.0);
+    public static final Rotation2d kZeroAngle = Rotation2d.fromDegrees(-12);
     public static final double kGearRatio = (100.0 / 1.0) * (5.0 / 3.0);
 
-    public static final double kAmpAngle = 0.0;
-    public static final double kClimbAngle = 0.0;
-    public static final double kSpeakerAngle = 0.0;
+    public static final Rotation2d kAmpAngle = new Rotation2d();
+    public static final Rotation2d kClimbAngle = new Rotation2d();
+    public static final Rotation2d kSpeakerAngle = new Rotation2d();
 
     public static final int kLeftMotor = 11;
     public static final int kRightMotor = 12;

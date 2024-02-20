@@ -13,6 +13,8 @@
 
 package com.argsrobotics.crescendo2024.oi;
 
+import edu.wpi.first.wpilibj2.command.button.Trigger;
+
 public interface DriverOI {
   public double getDriveX();
 
@@ -23,4 +25,12 @@ public interface DriverOI {
   public double getCenterOfRotationX();
 
   public double getCenterOfRotationY();
+
+  public double getArmUp();
+
+  public double getArmDown();
+
+  public Trigger getArmUpEnabled();
+
+  public Trigger getArmDownEnabled();
 }

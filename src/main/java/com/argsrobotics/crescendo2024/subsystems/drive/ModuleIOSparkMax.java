@@ -40,9 +40,11 @@ public class ModuleIOSparkMax implements ModuleIO {
   private final Queue<Double> drivePositionQueue;
   private final Queue<Double> turnPositionQueue;
 
-  private final boolean isTurnMotorInverted = true;
+  private final boolean isTurnMotorInverted = false;
+  private double chassisAngularOffset = 0.0;
 
-  public ModuleIOSparkMax(int index) {
+  public ModuleIOSparkMax(int index, double chassisAngularOffset) {
+    this.chassisAngularOffset = chassisAngularOffset;
     switch (index) {
       case 0:
         driveSparkMax = new CANSparkMax(1, MotorType.kBrushless);
@@ -72,7 +74,6 @@ public class ModuleIOSparkMax implements ModuleIO {
 
     driveEncoder = driveSparkMax.getEncoder();
     turnEncoder = turnSparkMax.getAbsoluteEncoder(Type.kDutyCycle);
-    turnEncoder.setInverted(true);
 
     turnSparkMax.setInverted(isTurnMotorInverted);
     driveSparkMax.setSmartCurrentLimit(50);
@@ -111,8 +112,12 @@ public class ModuleIOSparkMax implements ModuleIO {
     inputs.driveAppliedVolts = driveSparkMax.getAppliedOutput() * driveSparkMax.getBusVoltage();
     inputs.driveCurrentAmps = new double[] {driveSparkMax.getOutputCurrent()};
 
-    inputs.turnAbsolutePosition = new Rotation2d(turnEncoder.getPosition());
-    inputs.turnPosition = Rotation2d.fromRotations(turnEncoder.getPosition() / kTurnGearRatio);
+    inputs.turnAbsolutePosition =
+        Rotation2d.fromRotations(
+            (turnEncoder.getPosition() / kTurnGearRatio) - chassisAngularOffset);
+    inputs.turnPosition =
+        Rotation2d.fromRotations(
+            (turnEncoder.getPosition() / kTurnGearRatio) - chassisAngularOffset);
     inputs.turnVelocityRadPerSec =
         Units.rotationsPerMinuteToRadiansPerSecond(turnEncoder.getVelocity()) / kTurnGearRatio;
     inputs.turnAppliedVolts = turnSparkMax.getAppliedOutput() * turnSparkMax.getBusVoltage();
@@ -124,10 +129,17 @@ public class ModuleIOSparkMax implements ModuleIO {
             .toArray();
     inputs.odometryTurnPositions =
         turnPositionQueue.stream()
-            .map((Double value) -> Rotation2d.fromRotations(value / kTurnGearRatio))
+            .map(
+                (Double value) ->
+                    Rotation2d.fromRotations((value / kTurnGearRatio) - chassisAngularOffset))
             .toArray(Rotation2d[]::new);
     drivePositionQueue.clear();
     turnPositionQueue.clear();
+  }
+
+  @Override
+  public double getAngularOffset() {
+    return chassisAngularOffset;
   }
 
   @Override

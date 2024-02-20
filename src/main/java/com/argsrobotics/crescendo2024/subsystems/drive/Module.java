@@ -35,7 +35,6 @@ public class Module implements AutoCloseable {
   private final PIDController turnFeedback;
   private Rotation2d angleSetpoint = null; // Setpoint for closed loop control, null for open loop
   private Double speedSetpoint = null; // Setpoint for closed loop control, null for open loop
-  private Rotation2d turnRelativeOffset = null; // Relative + Offset = Absolute
   private double lastPositionMeters = 0.0; // Used for delta calculation
   private SwerveModulePosition[] positionDeltas = new SwerveModulePosition[] {};
 
@@ -96,12 +95,6 @@ public class Module implements AutoCloseable {
       }
     }
 
-    // On first cycle, reset relative turn encoder
-    // Wait until absolute angle is nonzero in case it wasn't initialized yet
-    if (turnRelativeOffset == null && inputs.turnAbsolutePosition.getRadians() != 0.0) {
-      turnRelativeOffset = inputs.turnAbsolutePosition.minus(inputs.turnPosition);
-    }
-
     // Run closed loop turn control
     if (angleSetpoint != null) {
       io.setTurnVoltage(
@@ -134,9 +127,7 @@ public class Module implements AutoCloseable {
     positionDeltas = new SwerveModulePosition[deltaCount];
     for (int i = 0; i < deltaCount; i++) {
       double positionMeters = inputs.odometryDrivePositionsRad[i] * kWheelRadius;
-      Rotation2d angle =
-          inputs.odometryTurnPositions[i].plus(
-              turnRelativeOffset != null ? turnRelativeOffset : new Rotation2d());
+      Rotation2d angle = inputs.odometryTurnPositions[i];
       positionDeltas[i] = new SwerveModulePosition(positionMeters - lastPositionMeters, angle);
       lastPositionMeters = positionMeters;
     }
@@ -158,7 +149,7 @@ public class Module implements AutoCloseable {
   /** Runs the module with the specified voltage while controlling to zero degrees. */
   public void runCharacterization(double volts) {
     // Closed loop turn control
-    angleSetpoint = new Rotation2d();
+    angleSetpoint = null;
 
     // Open loop drive control
     io.setDriveVoltage(volts);
@@ -183,11 +174,12 @@ public class Module implements AutoCloseable {
 
   /** Returns the current turn angle of the module. */
   public Rotation2d getAngle() {
-    if (turnRelativeOffset == null) {
-      return new Rotation2d();
-    } else {
-      return inputs.turnPosition.plus(turnRelativeOffset);
-    }
+    return inputs.turnPosition;
+  }
+
+  /** Returns the chassis-relative angular offset of the module. */
+  public Rotation2d getAngularOffset() {
+    return Rotation2d.fromRadians(io.getAngularOffset());
   }
 
   /** Returns the current drive position of the module in meters. */
