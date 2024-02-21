@@ -18,6 +18,7 @@ import com.argsrobotics.crescendo2024.subsystems.drive.Drive;
 import com.argsrobotics.crescendo2024.subsystems.vision.Vision;
 import com.argsrobotics.crescendo2024.subsystems.vision.VisionCameraIO.Mode;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 
 public class RobotState {
@@ -33,7 +34,7 @@ public class RobotState {
   public Pose2d currentTarget = null;
   public boolean hasTarget = false;
 
-  public Double armAngle = null;
+  public Rotation2d armAngle = null;
 
   public RobotState() {}
 

@@ -40,7 +40,7 @@ public class ModuleIOSparkMax implements ModuleIO {
   private final Queue<Double> drivePositionQueue;
   private final Queue<Double> turnPositionQueue;
 
-  private final boolean isTurnMotorInverted = false;
+  private final boolean isTurnEncoderInverted = false;
   private double chassisAngularOffset = 0.0;
 
   public ModuleIOSparkMax(int index, double chassisAngularOffset) {
@@ -75,7 +75,6 @@ public class ModuleIOSparkMax implements ModuleIO {
     driveEncoder = driveSparkMax.getEncoder();
     turnEncoder = turnSparkMax.getAbsoluteEncoder(Type.kDutyCycle);
 
-    turnSparkMax.setInverted(isTurnMotorInverted);
     driveSparkMax.setSmartCurrentLimit(50);
     turnSparkMax.setSmartCurrentLimit(20);
     driveSparkMax.enableVoltageCompensation(12.0);
@@ -85,6 +84,7 @@ public class ModuleIOSparkMax implements ModuleIO {
     driveEncoder.setMeasurementPeriod(10);
     driveEncoder.setAverageDepth(2);
     turnEncoder.setAverageDepth(2);
+    turnEncoder.setInverted(isTurnEncoderInverted);
 
     driveSparkMax.setCANTimeout(0);
     turnSparkMax.setCANTimeout(0);

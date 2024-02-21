@@ -67,7 +67,7 @@ public class Module implements AutoCloseable {
         break;
     }
 
-    turnFeedback.enableContinuousInput(-Math.PI, Math.PI);
+    turnFeedback.enableContinuousInput(0, 2 * Math.PI);
     setBrakeMode(true);
   }
 

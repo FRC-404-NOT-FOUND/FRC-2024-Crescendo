@@ -44,6 +44,7 @@ public class Arm extends SubsystemBase implements AutoCloseable {
 
     Logger.processInputs("Arm", inputs);
     Logger.recordOutput("Arm/CurrentAngleDegrees", getAngle().getDegrees());
+    com.argsrobotics.crescendo2024.RobotState.getCurrentRobotState().armAngle = getAngle();
   }
 
   /**
