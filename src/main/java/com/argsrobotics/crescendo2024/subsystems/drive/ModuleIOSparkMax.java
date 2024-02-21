@@ -76,7 +76,7 @@ public class ModuleIOSparkMax implements ModuleIO {
     driveEncoder = driveSparkMax.getEncoder();
     turnEncoder = turnSparkMax.getAbsoluteEncoder(Type.kDutyCycle);
 
-    driveSparkMax.setSmartCurrentLimit(50);
+    driveSparkMax.setSmartCurrentLimit(40);
     turnSparkMax.setSmartCurrentLimit(20);
     driveSparkMax.enableVoltageCompensation(12.0);
     turnSparkMax.enableVoltageCompensation(12.0);
@@ -116,15 +116,13 @@ public class ModuleIOSparkMax implements ModuleIO {
     inputs.turnAbsolutePosition =
         Rotation2d.fromRadians(
             SwerveUtils.wrapAngle(
-                Units.rotationsToRadians(turnEncoder.getPosition() / kTurnGearRatio)
-                    - chassisAngularOffset));
+                Units.rotationsToRadians(turnEncoder.getPosition()) - chassisAngularOffset));
     inputs.turnPosition =
         Rotation2d.fromRadians(
             SwerveUtils.wrapAngle(
-                Units.rotationsToRadians(turnEncoder.getPosition() / kTurnGearRatio)
-                    - chassisAngularOffset));
+                Units.rotationsToRadians(turnEncoder.getPosition()) - chassisAngularOffset));
     inputs.turnVelocityRadPerSec =
-        Units.rotationsPerMinuteToRadiansPerSecond(turnEncoder.getVelocity()) / kTurnGearRatio;
+        Units.rotationsPerMinuteToRadiansPerSecond(turnEncoder.getVelocity());
     inputs.turnAppliedVolts = turnSparkMax.getAppliedOutput() * turnSparkMax.getBusVoltage();
     inputs.turnCurrentAmps = new double[] {turnSparkMax.getOutputCurrent()};
 
@@ -136,7 +134,8 @@ public class ModuleIOSparkMax implements ModuleIO {
         turnPositionQueue.stream()
             .map(
                 (Double value) ->
-                    Rotation2d.fromRotations((value / kTurnGearRatio) - chassisAngularOffset))
+                    Rotation2d.fromRotations(value)
+                        .minus(Rotation2d.fromRadians(chassisAngularOffset)))
             .toArray(Rotation2d[]::new);
     drivePositionQueue.clear();
     turnPositionQueue.clear();
