@@ -15,6 +15,7 @@ package com.argsrobotics.crescendo2024.subsystems.drive;
 
 import static com.argsrobotics.crescendo2024.Constants.Drive.*;
 
+import com.argsrobotics.crescendo2024.util.SwerveUtils;
 import com.revrobotics.AbsoluteEncoder;
 import com.revrobotics.CANSparkBase.IdleMode;
 import com.revrobotics.CANSparkLowLevel.MotorType;
@@ -113,11 +114,15 @@ public class ModuleIOSparkMax implements ModuleIO {
     inputs.driveCurrentAmps = new double[] {driveSparkMax.getOutputCurrent()};
 
     inputs.turnAbsolutePosition =
-        Rotation2d.fromRotations(
-            (turnEncoder.getPosition() / kTurnGearRatio) - chassisAngularOffset);
+        Rotation2d.fromRadians(
+            SwerveUtils.wrapAngle(
+                Units.rotationsToRadians(turnEncoder.getPosition() / kTurnGearRatio)
+                    - chassisAngularOffset));
     inputs.turnPosition =
-        Rotation2d.fromRotations(
-            (turnEncoder.getPosition() / kTurnGearRatio) - chassisAngularOffset);
+        Rotation2d.fromRadians(
+            SwerveUtils.wrapAngle(
+                Units.rotationsToRadians(turnEncoder.getPosition() / kTurnGearRatio)
+                    - chassisAngularOffset));
     inputs.turnVelocityRadPerSec =
         Units.rotationsPerMinuteToRadiansPerSecond(turnEncoder.getVelocity()) / kTurnGearRatio;
     inputs.turnAppliedVolts = turnSparkMax.getAppliedOutput() * turnSparkMax.getBusVoltage();

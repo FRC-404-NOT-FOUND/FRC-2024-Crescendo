@@ -73,9 +73,9 @@ public final class Constants {
     // m/sec, direction, measured in radians, and rotational speed, measured in radians/sec.
     // So the units of each variable would be as follows. See my comment in Drive.java for more
     // details on how we calculate this.
-    public static final double kMagnitudeSlewRate = 1.8 * kMaxLinearSpeed; // m/sec^2
+    public static final double kMagnitudeSlewRate = 1.8; // m/sec^2
     public static final double kDirectionSlewRate = 1.2; // rad/sec
-    public static final double kRotationalSlewRate = 2.0 * kMaxAngularSpeed; // rad/sec^2
+    public static final double kRotationalSlewRate = 2.0; // rad/sec^2
 
     // Drift rate is the tuned number that represents the rotational drift rate of the robot while
     // turning and driving straight simulatneously. This provides a simple alternative to using
