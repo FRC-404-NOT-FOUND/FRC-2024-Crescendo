@@ -13,10 +13,17 @@
 
 package com.argsrobotics.crescendo2024.subsystems.drive;
 
+import static com.argsrobotics.crescendo2024.Constants.kTuningMode;
 import static com.argsrobotics.crescendo2024.Constants.Drive.kDriveGearRatio;
+import static com.argsrobotics.crescendo2024.Constants.Drive.kMaxLinearSpeed;
 import static com.argsrobotics.crescendo2024.Constants.Drive.kTurnGearRatio;
+import static com.argsrobotics.crescendo2024.Constants.Drive.kTurnSimD;
+import static com.argsrobotics.crescendo2024.Constants.Drive.kTurnSimI;
+import static com.argsrobotics.crescendo2024.Constants.Drive.kTurnSimP;
+import static com.argsrobotics.crescendo2024.Constants.Drive.kWheelRadius;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
@@ -34,6 +41,8 @@ public class ModuleIOSim implements ModuleIO {
   private DCMotor driveSim = DCMotor.getNEO(1);
   private DCMotor turnSim = DCMotor.getNeo550(1);
 
+  private final PIDController turnPidController = new PIDController(kTurnSimP.getDefault(), kTurnSimI.getDefault(), kTurnSimD.getDefault());
+
   private final Rotation2d turnAbsoluteInitPosition = new Rotation2d(Math.random() * 2.0 * Math.PI);
   private double driveAppliedVolts = 0.0;
   private double turnAppliedVolts = 0.0;
@@ -47,23 +56,26 @@ public class ModuleIOSim implements ModuleIO {
 
   @Override
   public void updateInputs(ModuleIOInputs inputs) {
+    if (kTuningMode) {
+      turnPidController.setPID(kTurnSimP.get(), kTurnSimI.get(), kTurnSimD.get());
+    }
     // I didn't like the default implementation
     // So I did it myself with some oversimplified calculus
     driveVelocity =
         (driveAppliedVolts / 12.0)
             * Units.rotationsPerMinuteToRadiansPerSecond(5676)
-            * (1.0 / kDriveGearRatio);
+            * (((2.0 * Math.PI * kWheelRadius) / kDriveGearRatio) / 60.0);
     drivePosition += driveVelocity * LOOP_PERIOD_SECS;
     turnVelocity =
         (turnAppliedVolts / 12.0)
             * Units.rotationsPerMinuteToRadiansPerSecond(11000)
-            * (1.0 / kTurnGearRatio);
+            * (((2.0 * Math.PI) / kTurnGearRatio) / 60.0);
     turnPosition += turnVelocity * LOOP_PERIOD_SECS;
     driveCurrent = getAppliedCurrent(driveSim, driveVelocity, driveAppliedVolts);
     turnCurrent = getAppliedCurrent(turnSim, turnVelocity, turnAppliedVolts);
 
-    inputs.drivePositionRad = drivePosition;
-    inputs.driveVelocityRadPerSec = driveVelocity;
+    inputs.drivePositionMeters = drivePosition;
+    inputs.driveVelocityMetersPerSec = driveVelocity;
     inputs.driveAppliedVolts = driveAppliedVolts;
     inputs.driveCurrentAmps = new double[] {Math.abs(driveCurrent)};
 
@@ -73,7 +85,7 @@ public class ModuleIOSim implements ModuleIO {
     inputs.turnAppliedVolts = turnAppliedVolts;
     inputs.turnCurrentAmps = new double[] {Math.abs(turnCurrent)};
 
-    inputs.odometryDrivePositionsRad = new double[] {inputs.drivePositionRad};
+    inputs.odometryDrivePositionsRad = new double[] {inputs.drivePositionMeters};
     inputs.odometryTurnPositions = new Rotation2d[] {inputs.turnPosition};
   }
 
@@ -90,6 +102,16 @@ public class ModuleIOSim implements ModuleIO {
   @Override
   public void setTurnVoltage(double volts) {
     turnAppliedVolts = MathUtil.clamp(volts, -12.0, 12.0);
+  }
+
+  @Override
+  public void setDriveVelocity(double velocity) {
+    driveAppliedVolts = (velocity / kMaxLinearSpeed) * 12.0;
+  }
+
+  @Override
+  public void setTurnAngle(Rotation2d angle) {
+    turnAppliedVolts = turnPidController.calculate(turnPosition, angle.getRadians());
   }
 
   private double getAppliedCurrent(DCMotor motor, double velocity, double volts) {

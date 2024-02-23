@@ -15,9 +15,6 @@ package com.argsrobotics.crescendo2024.subsystems.drive;
 
 import static com.argsrobotics.crescendo2024.Constants.Drive.*;
 
-import com.argsrobotics.crescendo2024.Constants;
-import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
@@ -30,9 +27,6 @@ public class Module implements AutoCloseable {
   private final ModuleIOInputsAutoLogged inputs = new ModuleIOInputsAutoLogged();
   private final int index;
 
-  private SimpleMotorFeedforward driveFeedforward;
-  private final PIDController driveFeedback;
-  private final PIDController turnFeedback;
   private Rotation2d angleSetpoint = null; // Setpoint for closed loop control, null for open loop
   private Double speedSetpoint = null; // Setpoint for closed loop control, null for open loop
   private double lastPositionMeters = 0.0; // Used for delta calculation
@@ -46,28 +40,6 @@ public class Module implements AutoCloseable {
     this.io = io;
     this.index = index;
 
-    // Switch constants based on mode (the physics simulator is treated as a
-    // separate robot with different tuning)
-    switch (Constants.currentMode) {
-      case REAL:
-      case REPLAY:
-        driveFeedforward = new SimpleMotorFeedforward(kDriveS.get(), kDriveV.get());
-        driveFeedback = new PIDController(kDriveP.get(), kDriveI.get(), kDriveD.get());
-        turnFeedback = new PIDController(kTurnP.get(), kTurnI.get(), kTurnD.get());
-        break;
-      case SIM:
-        driveFeedforward = new SimpleMotorFeedforward(kDriveSimS.get(), kDriveSimV.get());
-        driveFeedback = new PIDController(kDriveSimP.get(), kDriveSimI.get(), kDriveSimD.get());
-        turnFeedback = new PIDController(kTurnSimP.get(), kTurnSimI.get(), kTurnSimD.get());
-        break;
-      default:
-        driveFeedforward = new SimpleMotorFeedforward(0.0, 0.0);
-        driveFeedback = new PIDController(0.0, 0.0, 0.0);
-        turnFeedback = new PIDController(0.0, 0.0, 0.0);
-        break;
-    }
-
-    turnFeedback.enableContinuousInput(0, 2 * Math.PI);
     setBrakeMode(true);
   }
 
@@ -82,23 +54,9 @@ public class Module implements AutoCloseable {
   public void periodic() {
     Logger.processInputs("Drive/Module" + Integer.toString(index), inputs);
 
-    if (Constants.kTuningMode) {
-      // Set PID constants if in tuning mode
-      if (Constants.currentMode == Constants.Mode.SIM) {
-        driveFeedforward = new SimpleMotorFeedforward(kDriveSimS.get(), kDriveSimV.get());
-        driveFeedback.setPID(kDriveSimP.get(), kDriveSimI.get(), kDriveSimD.get());
-        turnFeedback.setPID(kTurnSimP.get(), kTurnSimI.get(), kTurnSimD.get());
-      } else {
-        driveFeedforward = new SimpleMotorFeedforward(kDriveS.get(), kDriveV.get());
-        driveFeedback.setPID(kDriveP.get(), kDriveI.get(), kDriveD.get());
-        turnFeedback.setPID(kTurnP.get(), kTurnI.get(), kTurnD.get());
-      }
-    }
-
     // Run closed loop turn control
     if (angleSetpoint != null) {
-      io.setTurnVoltage(
-          turnFeedback.calculate(getAngle().getRadians(), angleSetpoint.getRadians()));
+      io.setTurnAngle(angleSetpoint);
 
       // Run closed loop drive control
       // Only allowed if closed loop turn control is running
@@ -108,13 +66,9 @@ public class Module implements AutoCloseable {
         // When the error is 90 degrees, the velocity setpoint should be 0. As the wheel turns
         // towards the setpoint, its velocity should increase. This is achieved by
         // taking the component of the velocity in the direction of the setpoint.
-        double adjustSpeedSetpoint = speedSetpoint * Math.cos(turnFeedback.getPositionError());
+        // double adjustSpeedSetpoint = speedSetpoint * Math.cos(io.getTurnPositionError());
 
-        // Run drive controller
-        double velocityRadPerSec = adjustSpeedSetpoint / kWheelRadius;
-        io.setDriveVoltage(
-            driveFeedforward.calculate(velocityRadPerSec)
-                + driveFeedback.calculate(inputs.driveVelocityRadPerSec, velocityRadPerSec));
+        io.setDriveVelocity(speedSetpoint);
       }
     }
 
@@ -189,12 +143,12 @@ public class Module implements AutoCloseable {
 
   /** Returns the current drive position of the module in meters. */
   public double getPositionMeters() {
-    return inputs.drivePositionRad * kWheelRadius;
+    return inputs.drivePositionMeters;
   }
 
   /** Returns the current drive velocity of the module in meters per second. */
   public double getVelocityMetersPerSec() {
-    return inputs.driveVelocityRadPerSec * kWheelRadius;
+    return inputs.driveVelocityMetersPerSec;
   }
 
   /** Returns the module position (turn angle and drive position). */
@@ -219,7 +173,7 @@ public class Module implements AutoCloseable {
 
   /** Returns the drive velocity in radians/sec. */
   public double getCharacterizationVelocity() {
-    return inputs.driveVelocityRadPerSec;
+    return inputs.driveVelocityMetersPerSec;
   }
 
   @Override

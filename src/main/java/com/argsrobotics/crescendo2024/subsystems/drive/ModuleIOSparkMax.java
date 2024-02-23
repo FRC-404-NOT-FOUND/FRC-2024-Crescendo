@@ -13,16 +13,20 @@
 
 package com.argsrobotics.crescendo2024.subsystems.drive;
 
+import static com.argsrobotics.crescendo2024.Constants.kTuningMode;
 import static com.argsrobotics.crescendo2024.Constants.Drive.*;
 
-import com.argsrobotics.crescendo2024.util.SwerveUtils;
 import com.revrobotics.AbsoluteEncoder;
+import com.revrobotics.CANSparkBase.ControlType;
 import com.revrobotics.CANSparkBase.IdleMode;
 import com.revrobotics.CANSparkLowLevel.MotorType;
 import com.revrobotics.CANSparkLowLevel.PeriodicFrame;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.RelativeEncoder;
+import com.revrobotics.SparkPIDController;
 import com.revrobotics.SparkAbsoluteEncoder.Type;
+
+import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
 import java.util.Queue;
@@ -35,6 +39,10 @@ import java.util.Queue;
 public class ModuleIOSparkMax implements ModuleIO {
   private final CANSparkMax driveSparkMax;
   private final CANSparkMax turnSparkMax;
+
+  private SimpleMotorFeedforward driveFeedforward;
+  private final SparkPIDController drivePidController;
+  private final SparkPIDController turnPidController;
 
   private final RelativeEncoder driveEncoder;
   private final AbsoluteEncoder turnEncoder;
@@ -75,6 +83,8 @@ public class ModuleIOSparkMax implements ModuleIO {
 
     driveEncoder = driveSparkMax.getEncoder();
     turnEncoder = turnSparkMax.getAbsoluteEncoder(Type.kDutyCycle);
+    drivePidController = driveSparkMax.getPIDController();
+    turnPidController = turnSparkMax.getPIDController();
 
     driveSparkMax.setSmartCurrentLimit(40);
     turnSparkMax.setSmartCurrentLimit(20);
@@ -86,6 +96,31 @@ public class ModuleIOSparkMax implements ModuleIO {
     driveEncoder.setAverageDepth(2);
     turnEncoder.setAverageDepth(2);
     turnEncoder.setInverted(isTurnEncoderInverted);
+
+    turnPidController.setPositionPIDWrappingEnabled(true);
+    turnPidController.setPositionPIDWrappingMinInput(0);
+    turnPidController.setPositionPIDWrappingMaxInput(2 * Math.PI);
+
+    driveEncoder.setPositionConversionFactor((kWheelRadius * 2 * Math.PI) / kDriveGearRatio);
+    driveEncoder.setVelocityConversionFactor(((2 * Math.PI * kWheelRadius) / kDriveGearRatio) / 60.0);
+
+    turnEncoder.setPositionConversionFactor(2 * Math.PI);
+    turnEncoder.setVelocityConversionFactor((2 * Math.PI) / 60.0);
+
+    drivePidController.setFeedbackDevice(driveEncoder);
+    turnPidController.setFeedbackDevice(turnEncoder);
+
+    driveFeedforward = new SimpleMotorFeedforward(kDriveS.get(), kDriveV.get());
+    drivePidController.setP(kDriveP.get());
+    drivePidController.setI(kDriveI.get());
+    drivePidController.setD(kDriveD.get());
+    drivePidController.setFF(0);
+
+    turnPidController.setP(kTurnP.get());
+    turnPidController.setI(kTurnI.get());
+    turnPidController.setD(kTurnD.get());
+    turnPidController.setFF(kTurnFF.get());
+
 
     driveSparkMax.setCANTimeout(0);
     turnSparkMax.setCANTimeout(0);
@@ -106,21 +141,29 @@ public class ModuleIOSparkMax implements ModuleIO {
 
   @Override
   public void updateInputs(ModuleIOInputs inputs) {
-    inputs.drivePositionRad =
-        Units.rotationsToRadians(driveEncoder.getPosition()) / kDriveGearRatio;
-    inputs.driveVelocityRadPerSec =
-        Units.rotationsPerMinuteToRadiansPerSecond(driveEncoder.getVelocity()) / kDriveGearRatio;
+    if (kTuningMode) {
+      drivePidController.setP(kDriveP.get());
+      drivePidController.setI(kDriveI.get());
+      drivePidController.setD(kDriveD.get());
+      drivePidController.setFF(0);
+
+      turnPidController.setP(kTurnP.get());
+      turnPidController.setI(kTurnI.get());
+      turnPidController.setD(kTurnD.get());
+      turnPidController.setFF(kTurnFF.get());
+
+      driveFeedforward = new SimpleMotorFeedforward(kDriveS.get(), kDriveV.get());
+    }
+
+    inputs.drivePositionMeters = driveEncoder.getPosition();
+    inputs.driveVelocityMetersPerSec = driveEncoder.getVelocity();
     inputs.driveAppliedVolts = driveSparkMax.getAppliedOutput() * driveSparkMax.getBusVoltage();
     inputs.driveCurrentAmps = new double[] {driveSparkMax.getOutputCurrent()};
 
     inputs.turnAbsolutePosition =
-        Rotation2d.fromRadians(
-            SwerveUtils.wrapAngle(
-                Units.rotationsToRadians(turnEncoder.getPosition()) - chassisAngularOffset));
+        Rotation2d.fromRadians(turnEncoder.getPosition() - chassisAngularOffset);
     inputs.turnPosition =
-        Rotation2d.fromRadians(
-            SwerveUtils.wrapAngle(
-                Units.rotationsToRadians(turnEncoder.getPosition()) - chassisAngularOffset));
+        Rotation2d.fromRadians(turnEncoder.getPosition() - chassisAngularOffset);
     inputs.turnVelocityRadPerSec =
         Units.rotationsPerMinuteToRadiansPerSecond(turnEncoder.getVelocity());
     inputs.turnAppliedVolts = turnSparkMax.getAppliedOutput() * turnSparkMax.getBusVoltage();
@@ -154,6 +197,14 @@ public class ModuleIOSparkMax implements ModuleIO {
   @Override
   public void setTurnVoltage(double volts) {
     turnSparkMax.setVoltage(volts);
+  }
+
+  public void setDriveVelocity(double velocity) {
+    drivePidController.setReference(velocity, ControlType.kVelocity, 0, driveFeedforward.calculate(velocity));
+  }
+
+  public void setTurnAngle(Rotation2d angle) {
+    turnPidController.setReference(angle.getRadians(), ControlType.kPosition);
   }
 
   @Override
