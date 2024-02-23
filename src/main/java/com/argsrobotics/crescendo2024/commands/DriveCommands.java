@@ -15,6 +15,7 @@ package com.argsrobotics.crescendo2024.commands;
 
 import static com.argsrobotics.crescendo2024.Constants.Drive.kDriveDeadband;
 
+import com.argsrobotics.crescendo2024.subsystems.GenericSwerveDrive;
 import com.argsrobotics.crescendo2024.subsystems.drive.Drive;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -31,7 +32,7 @@ public class DriveCommands {
    * Field relative drive command using two joysticks (controlling linear and angular velocities).
    */
   public static Command joystickDrive(
-      Drive drive,
+      GenericSwerveDrive drive,
       DoubleSupplier xSupplier,
       DoubleSupplier ySupplier,
       DoubleSupplier omegaSupplier,
@@ -61,9 +62,9 @@ public class DriveCommands {
 
           // Convert to field relative speeds & send command
           drive.runVelocity(
-              ChassisSpeeds.fromFieldRelativeSpeeds(speeds, drive.getRotation()), centerOfRot);
+              ChassisSpeeds.fromFieldRelativeSpeeds(speeds, drive.getHeading()), centerOfRot);
         },
-        drive);
+        drive.getDriveSubsystem());
   }
 
   /**

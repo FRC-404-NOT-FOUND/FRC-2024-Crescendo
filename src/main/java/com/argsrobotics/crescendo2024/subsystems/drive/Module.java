@@ -149,10 +149,15 @@ public class Module implements AutoCloseable {
   /** Runs the module with the specified voltage while controlling to zero degrees. */
   public void runCharacterization(double volts) {
     // Closed loop turn control
-    angleSetpoint = null;
+    angleSetpoint = new Rotation2d();
 
     // Open loop drive control
     io.setDriveVoltage(volts);
+    speedSetpoint = null;
+  }
+
+  public void runAngleCharacterization(double volts) {
+    io.setTurnVoltage(volts);
     speedSetpoint = null;
   }
 

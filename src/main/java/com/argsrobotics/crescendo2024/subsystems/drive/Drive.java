@@ -31,7 +31,8 @@ import static com.argsrobotics.crescendo2024.Constants.Drive.kTrackWidthY;
 import static com.argsrobotics.crescendo2024.Constants.kTuningMode;
 
 import com.argsrobotics.crescendo2024.RobotState;
-import com.argsrobotics.crescendo2024.util.ChassisSpeedsUtils;
+import com.argsrobotics.crescendo2024.subsystems.GenericSwerveDrive;
+import com.argsrobotics.crescendo2024.util.AdvancedSwerveKinematics;
 import com.argsrobotics.crescendo2024.util.LocalADStarAK;
 import com.argsrobotics.crescendo2024.util.SwerveUtils;
 import com.pathplanner.lib.auto.AutoBuilder;
@@ -42,6 +43,7 @@ import com.pathplanner.lib.util.HolonomicPathFollowerConfig;
 import com.pathplanner.lib.util.PIDConstants;
 import com.pathplanner.lib.util.PathPlannerLogging;
 import com.pathplanner.lib.util.ReplanningConfig;
+
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -62,7 +64,10 @@ import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import org.littletonrobotics.junction.AutoLogOutput;
@@ -72,7 +77,7 @@ import org.littletonrobotics.junction.Logger;
  * This is the class for the main drive subsystem. It doesn't really do much. Most of it is just
  * odometry code (as usual).
  */
-public class Drive extends SubsystemBase implements AutoCloseable {
+public class Drive extends SubsystemBase implements AutoCloseable, GenericSwerveDrive {
   public static final Lock odometryLock = new ReentrantLock();
   private final GyroIO gyroIO;
   private final GyroIOInputsAutoLogged gyroInputs = new GyroIOInputsAutoLogged();
@@ -80,10 +85,15 @@ public class Drive extends SubsystemBase implements AutoCloseable {
 
   private final SwerveDrivePoseEstimator estimator;
 
-  private SwerveDriveKinematics kinematics = new SwerveDriveKinematics(getModuleTranslations());
+  private AdvancedSwerveKinematics kinematics =
+      new AdvancedSwerveKinematics(getModuleTranslations());
   private Pose2d pose = new Pose2d();
   private Rotation2d lastGyroRotation = new Rotation2d();
   private Rotation2d gyroOffset;
+
+  private final SysIdRoutine driveRoutine;
+
+  private final SysIdRoutine angleRoutine;
 
   private final SlewRateLimiter magLimiter = new SlewRateLimiter(kMagnitudeSlewRate);
   private final SlewRateLimiter rotLimiter = new SlewRateLimiter(kRotationalSlewRate);
@@ -118,12 +128,15 @@ public class Drive extends SubsystemBase implements AutoCloseable {
     RobotState.getCurrentRobotState().currentPose = pose;
     RobotState.getCurrentRobotState().currentModuleStates = getModuleStates();
 
+    driveRoutine = new SysIdRoutine(new SysIdRoutine.Config(), new SysIdRoutine.Mechanism(this::runCharacterizationVolts, null, getDriveSubsystem()));
+    angleRoutine = new SysIdRoutine(new SysIdRoutine.Config(), new SysIdRoutine.Mechanism(this::runAngleCharacterization, null, getDriveSubsystem()));
+
     // Configure AutoBuilder for PathPlanner
     // PathPlanner doesn't let you dynamically update PID values for tuning.
     // They're still in here as TunableNumbers just because I didn't feel like changing it.
     AutoBuilder.configureHolonomic(
         this::getPose,
-        this::setPose,
+        this::resetOdometry,
         () -> kinematics.toChassisSpeeds(getModuleStates()),
         this::runVelocity,
         new HolonomicPathFollowerConfig(
@@ -264,7 +277,7 @@ public class Drive extends SubsystemBase implements AutoCloseable {
    */
   public void runVelocity(ChassisSpeeds speeds, Translation2d centerOfRot) {
     // Calculate module setpoints
-    ChassisSpeeds discreteSpeeds = ChassisSpeedsUtils.discretize(speeds, 0.02, driftRate);
+    ChassisSpeeds discreteSpeeds = AdvancedSwerveKinematics.correctForDynamics(speeds, driftRate);
 
     SwerveModuleState[] setpointStates =
         kinematics.toSwerveModuleStates(discreteSpeeds, centerOfRot);
@@ -281,17 +294,6 @@ public class Drive extends SubsystemBase implements AutoCloseable {
     // Log setpoint states
     Logger.recordOutput("SwerveStates/Setpoints", setpointStates);
     Logger.recordOutput("SwerveStates/SetpointsOptimized", optimizedSetpointStates);
-  }
-
-  /**
-   * Runs the drive at the desired velocity. This uses the default setting of zero center of
-   * rotation difference and no rate limiting (for PathPlanner to automatically control
-   * acceleration).
-   *
-   * @param speeds
-   */
-  public void runVelocity(ChassisSpeeds speeds) {
-    runVelocity(speeds, new Translation2d());
   }
 
   /** Calculate the applied slew rate based on the current ChassisSpeeds */
@@ -374,7 +376,7 @@ public class Drive extends SubsystemBase implements AutoCloseable {
   }
 
   /** Pathfind to a specific point */
-  public Command goToPoint(Pose2d point) {
+  public Command driveToPose(Pose2d point) {
     return AutoBuilder.pathfindToPose(
         point,
         new PathConstraints(
@@ -411,9 +413,19 @@ public class Drive extends SubsystemBase implements AutoCloseable {
     }
   }
 
+  public void runAngleCharacterization(double volts) {
+    for (int i = 0; i < 4; i++) {
+      modules[i].runAngleCharacterization(volts);
+    }
+  }
+
   /** Runs at the commanded voltage */
   public void runCharacterizationVolts(Measure<Voltage> volts) {
     runCharacterizationVolts(volts.in(Units.Volts));
+  }
+
+  public void runAngleCharacterization(Measure<Voltage> volts) {
+    runAngleCharacterization(volts.in(Units.Volts));
   }
 
   /** Returns the average drive velocity in radians/sec. */
@@ -423,6 +435,30 @@ public class Drive extends SubsystemBase implements AutoCloseable {
       driveVelocityAverage += module.getCharacterizationVelocity();
     }
     return driveVelocityAverage / 4.0;
+  }
+
+  public Command sysIdDriveMotorCommand() {
+    return Commands.sequence(
+      driveRoutine.quasistatic(SysIdRoutine.Direction.kForward),
+      Commands.waitSeconds(3),
+      driveRoutine.quasistatic(SysIdRoutine.Direction.kReverse),
+      Commands.waitSeconds(3),
+      driveRoutine.dynamic(SysIdRoutine.Direction.kForward),
+      Commands.waitSeconds(3),
+      driveRoutine.dynamic(SysIdRoutine.Direction.kReverse)
+    );
+  }
+
+  public Command sysIdAngleMotorCommand() {
+    return Commands.sequence(
+      angleRoutine.quasistatic(SysIdRoutine.Direction.kForward),
+      Commands.waitSeconds(3),
+      angleRoutine.quasistatic(SysIdRoutine.Direction.kReverse),
+      Commands.waitSeconds(3),
+      angleRoutine.dynamic(SysIdRoutine.Direction.kForward),
+      Commands.waitSeconds(3),
+      angleRoutine.dynamic(SysIdRoutine.Direction.kReverse)
+    );
   }
 
   /** Returns the module states (turn angles and drive velocities) for all of the modules. */
@@ -458,12 +494,12 @@ public class Drive extends SubsystemBase implements AutoCloseable {
   }
 
   /** Returns the current odometry rotation. */
-  public Rotation2d getRotation() {
+  public Rotation2d getHeading() {
     return pose.getRotation();
   }
 
   /** Resets the current odometry pose. */
-  public void setPose(Pose2d pose) {
+  public void resetOdometry(Pose2d pose) {
     SwerveModulePosition[] positions = new SwerveModulePosition[4];
     for (int i = 0; i < 4; i++) {
       positions[i] = modules[i].getPosition();
@@ -495,6 +531,10 @@ public class Drive extends SubsystemBase implements AutoCloseable {
     for (var module : modules) {
       module.close();
     }
+  }
+
+  public SubsystemBase getDriveSubsystem() {
+    return this;
   }
 
   /** Returns an array of module translations. */

@@ -20,11 +20,10 @@ import static com.argsrobotics.crescendo2024.Constants.Drive.kBackRightChassisAn
 import static com.argsrobotics.crescendo2024.Constants.Drive.kFrontLeftChassisAngularOffset;
 import static com.argsrobotics.crescendo2024.Constants.Drive.kFrontRightChassisAngularOffset;
 
-import com.argsrobotics.crescendo2024.commands.DriveCharacterization;
 import com.argsrobotics.crescendo2024.commands.DriveCommands;
-import com.argsrobotics.crescendo2024.commands.FeedForwardCharacterization;
 import com.argsrobotics.crescendo2024.oi.DriverOI;
 import com.argsrobotics.crescendo2024.oi.DriverOIXBox;
+import com.argsrobotics.crescendo2024.subsystems.GenericSwerveDrive;
 import com.argsrobotics.crescendo2024.subsystems.arm.Arm;
 import com.argsrobotics.crescendo2024.subsystems.arm.ArmIO;
 import com.argsrobotics.crescendo2024.subsystems.arm.ArmIONeo;
@@ -50,7 +49,7 @@ import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
  */
 public class RobotContainer {
   // Subsystems
-  public final Drive drive;
+  public final GenericSwerveDrive drive;
   public final Vision vision;
   public final Arm arm;
 
@@ -131,15 +130,9 @@ public class RobotContainer {
     // Set up auto routines
     autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
 
-    // Set up FF characterization routines
-    autoChooser.addOption(
-        "Drive FF Characterization",
-        new FeedForwardCharacterization(
-            drive, drive::runCharacterizationVolts, drive::getCharacterizationVelocity));
-
     autoChooser.addOption(
         "Drive SysId Characterization",
-        new DriveCharacterization(drive)); // Try this instead of previous
+        drive.sysIdDriveMotorCommand()); // Try this instead of previous
 
     // Configure the button bindings
     configureButtonBindings();
@@ -152,7 +145,7 @@ public class RobotContainer {
    * edu.wpi.first.wpilibj2.command.button.JoystickButton}.
    */
   private void configureButtonBindings() {
-    drive.setDefaultCommand(
+    drive.getDriveSubsystem().setDefaultCommand(
         DriveCommands.joystickDrive(
             drive,
             oi::getDriveX,
