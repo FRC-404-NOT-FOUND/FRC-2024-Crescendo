@@ -13,7 +13,6 @@
 
 package com.argsrobotics.crescendo2024.subsystems.drive;
 
-import static com.argsrobotics.crescendo2024.Constants.kTuningMode;
 import static com.argsrobotics.crescendo2024.Constants.Drive.kDriveGearRatio;
 import static com.argsrobotics.crescendo2024.Constants.Drive.kMaxLinearSpeed;
 import static com.argsrobotics.crescendo2024.Constants.Drive.kTurnGearRatio;
@@ -21,6 +20,7 @@ import static com.argsrobotics.crescendo2024.Constants.Drive.kTurnSimD;
 import static com.argsrobotics.crescendo2024.Constants.Drive.kTurnSimI;
 import static com.argsrobotics.crescendo2024.Constants.Drive.kTurnSimP;
 import static com.argsrobotics.crescendo2024.Constants.Drive.kWheelRadius;
+import static com.argsrobotics.crescendo2024.Constants.kTuningMode;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
@@ -41,7 +41,8 @@ public class ModuleIOSim implements ModuleIO {
   private DCMotor driveSim = DCMotor.getNEO(1);
   private DCMotor turnSim = DCMotor.getNeo550(1);
 
-  private final PIDController turnPidController = new PIDController(kTurnSimP.getDefault(), kTurnSimI.getDefault(), kTurnSimD.getDefault());
+  private final PIDController turnPidController =
+      new PIDController(kTurnSimP.getDefault(), kTurnSimI.getDefault(), kTurnSimD.getDefault());
 
   private final Rotation2d turnAbsoluteInitPosition = new Rotation2d(Math.random() * 2.0 * Math.PI);
   private double driveAppliedVolts = 0.0;

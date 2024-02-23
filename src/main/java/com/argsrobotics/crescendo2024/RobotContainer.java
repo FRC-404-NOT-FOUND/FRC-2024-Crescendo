@@ -145,14 +145,16 @@ public class RobotContainer {
    * edu.wpi.first.wpilibj2.command.button.JoystickButton}.
    */
   private void configureButtonBindings() {
-    drive.getDriveSubsystem().setDefaultCommand(
-        DriveCommands.joystickDrive(
-            drive,
-            oi::getDriveX,
-            oi::getDriveY,
-            oi::getDriveZ,
-            oi::getCenterOfRotationX,
-            oi::getCenterOfRotationY));
+    drive
+        .getDriveSubsystem()
+        .setDefaultCommand(
+            DriveCommands.joystickDrive(
+                drive,
+                oi::getDriveX,
+                oi::getDriveY,
+                oi::getDriveZ,
+                oi::getCenterOfRotationX,
+                oi::getCenterOfRotationY));
 
     // arm.setDefaultCommand(new TuneArmPID(arm));
 

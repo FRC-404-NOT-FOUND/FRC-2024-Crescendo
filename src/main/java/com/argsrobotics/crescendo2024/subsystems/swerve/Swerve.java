@@ -151,6 +151,7 @@ public class Swerve extends SubsystemBase implements GenericSwerveDrive {
 
   /**
    * Follow a pathplanner or choreo path.
+   *
    * @param path Path to follow
    * @return Path following command
    */
@@ -160,6 +161,7 @@ public class Swerve extends SubsystemBase implements GenericSwerveDrive {
 
   /**
    * Follow a pathplanner or choreo path.
+   *
    * @param path Path to follow
    * @return Path following command
    */
@@ -320,7 +322,7 @@ public class Swerve extends SubsystemBase implements GenericSwerveDrive {
         false); // Open loop is disabled since it shouldn't be used most of the time.
   }
 
-    /** Calculate the applied slew rate based on the current ChassisSpeeds */
+  /** Calculate the applied slew rate based on the current ChassisSpeeds */
   public ChassisSpeeds calculateSlewRate(
       double translationDirection, double translationMagnitude, double omega) {
     ChassisSpeeds speeds = new ChassisSpeeds();
@@ -354,7 +356,7 @@ public class Swerve extends SubsystemBase implements GenericSwerveDrive {
 
   /**
    * Drive according to the chassis robot oriented velocity.
-   * 
+   *
    * @param velocity Robot oriented {@link ChassisSpeeds}
    */
   public void runVelocity(ChassisSpeeds velocity) {
@@ -363,6 +365,7 @@ public class Swerve extends SubsystemBase implements GenericSwerveDrive {
 
   /**
    * Run all wheels at a set setpoint (for tuning).
+   *
    * @param velocity Velocity setpoint
    * @param angle Angle setpoint
    */
@@ -555,6 +558,6 @@ public class Swerve extends SubsystemBase implements GenericSwerveDrive {
   }
 
   public void addVisionMeasurement(Pose2d pose, double timestamp) {
-      swerveDrive.addVisionMeasurement(pose, timestamp);
+    swerveDrive.addVisionMeasurement(pose, timestamp);
   }
 }

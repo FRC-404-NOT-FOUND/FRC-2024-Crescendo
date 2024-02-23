@@ -43,7 +43,6 @@ import com.pathplanner.lib.util.HolonomicPathFollowerConfig;
 import com.pathplanner.lib.util.PIDConstants;
 import com.pathplanner.lib.util.PathPlannerLogging;
 import com.pathplanner.lib.util.ReplanningConfig;
-
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -67,7 +66,6 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
-
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import org.littletonrobotics.junction.AutoLogOutput;
@@ -128,8 +126,14 @@ public class Drive extends SubsystemBase implements AutoCloseable, GenericSwerve
     RobotState.getCurrentRobotState().currentPose = pose;
     RobotState.getCurrentRobotState().currentModuleStates = getModuleStates();
 
-    driveRoutine = new SysIdRoutine(new SysIdRoutine.Config(), new SysIdRoutine.Mechanism(this::runCharacterizationVolts, null, getDriveSubsystem()));
-    angleRoutine = new SysIdRoutine(new SysIdRoutine.Config(), new SysIdRoutine.Mechanism(this::runAngleCharacterization, null, getDriveSubsystem()));
+    driveRoutine =
+        new SysIdRoutine(
+            new SysIdRoutine.Config(),
+            new SysIdRoutine.Mechanism(this::runCharacterizationVolts, null, getDriveSubsystem()));
+    angleRoutine =
+        new SysIdRoutine(
+            new SysIdRoutine.Config(),
+            new SysIdRoutine.Mechanism(this::runAngleCharacterization, null, getDriveSubsystem()));
 
     // Configure AutoBuilder for PathPlanner
     // PathPlanner doesn't let you dynamically update PID values for tuning.
@@ -439,26 +443,24 @@ public class Drive extends SubsystemBase implements AutoCloseable, GenericSwerve
 
   public Command sysIdDriveMotorCommand() {
     return Commands.sequence(
-      driveRoutine.quasistatic(SysIdRoutine.Direction.kForward),
-      Commands.waitSeconds(3),
-      driveRoutine.quasistatic(SysIdRoutine.Direction.kReverse),
-      Commands.waitSeconds(3),
-      driveRoutine.dynamic(SysIdRoutine.Direction.kForward),
-      Commands.waitSeconds(3),
-      driveRoutine.dynamic(SysIdRoutine.Direction.kReverse)
-    );
+        driveRoutine.quasistatic(SysIdRoutine.Direction.kForward),
+        Commands.waitSeconds(3),
+        driveRoutine.quasistatic(SysIdRoutine.Direction.kReverse),
+        Commands.waitSeconds(3),
+        driveRoutine.dynamic(SysIdRoutine.Direction.kForward),
+        Commands.waitSeconds(3),
+        driveRoutine.dynamic(SysIdRoutine.Direction.kReverse));
   }
 
   public Command sysIdAngleMotorCommand() {
     return Commands.sequence(
-      angleRoutine.quasistatic(SysIdRoutine.Direction.kForward),
-      Commands.waitSeconds(3),
-      angleRoutine.quasistatic(SysIdRoutine.Direction.kReverse),
-      Commands.waitSeconds(3),
-      angleRoutine.dynamic(SysIdRoutine.Direction.kForward),
-      Commands.waitSeconds(3),
-      angleRoutine.dynamic(SysIdRoutine.Direction.kReverse)
-    );
+        angleRoutine.quasistatic(SysIdRoutine.Direction.kForward),
+        Commands.waitSeconds(3),
+        angleRoutine.quasistatic(SysIdRoutine.Direction.kReverse),
+        Commands.waitSeconds(3),
+        angleRoutine.dynamic(SysIdRoutine.Direction.kForward),
+        Commands.waitSeconds(3),
+        angleRoutine.dynamic(SysIdRoutine.Direction.kReverse));
   }
 
   /** Returns the module states (turn angles and drive velocities) for all of the modules. */

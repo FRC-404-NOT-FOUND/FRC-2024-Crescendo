@@ -13,8 +13,8 @@
 
 package com.argsrobotics.crescendo2024.subsystems.drive;
 
-import static com.argsrobotics.crescendo2024.Constants.kTuningMode;
 import static com.argsrobotics.crescendo2024.Constants.Drive.*;
+import static com.argsrobotics.crescendo2024.Constants.kTuningMode;
 
 import com.revrobotics.AbsoluteEncoder;
 import com.revrobotics.CANSparkBase.ControlType;
@@ -23,9 +23,8 @@ import com.revrobotics.CANSparkLowLevel.MotorType;
 import com.revrobotics.CANSparkLowLevel.PeriodicFrame;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.RelativeEncoder;
-import com.revrobotics.SparkPIDController;
 import com.revrobotics.SparkAbsoluteEncoder.Type;
-
+import com.revrobotics.SparkPIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
@@ -102,7 +101,8 @@ public class ModuleIOSparkMax implements ModuleIO {
     turnPidController.setPositionPIDWrappingMaxInput(2 * Math.PI);
 
     driveEncoder.setPositionConversionFactor((kWheelRadius * 2 * Math.PI) / kDriveGearRatio);
-    driveEncoder.setVelocityConversionFactor(((2 * Math.PI * kWheelRadius) / kDriveGearRatio) / 60.0);
+    driveEncoder.setVelocityConversionFactor(
+        ((2 * Math.PI * kWheelRadius) / kDriveGearRatio) / 60.0);
 
     turnEncoder.setPositionConversionFactor(2 * Math.PI);
     turnEncoder.setVelocityConversionFactor((2 * Math.PI) / 60.0);
@@ -120,7 +120,6 @@ public class ModuleIOSparkMax implements ModuleIO {
     turnPidController.setI(kTurnI.get());
     turnPidController.setD(kTurnD.get());
     turnPidController.setFF(kTurnFF.get());
-
 
     driveSparkMax.setCANTimeout(0);
     turnSparkMax.setCANTimeout(0);
@@ -162,8 +161,7 @@ public class ModuleIOSparkMax implements ModuleIO {
 
     inputs.turnAbsolutePosition =
         Rotation2d.fromRadians(turnEncoder.getPosition() - chassisAngularOffset);
-    inputs.turnPosition =
-        Rotation2d.fromRadians(turnEncoder.getPosition() - chassisAngularOffset);
+    inputs.turnPosition = Rotation2d.fromRadians(turnEncoder.getPosition() - chassisAngularOffset);
     inputs.turnVelocityRadPerSec =
         Units.rotationsPerMinuteToRadiansPerSecond(turnEncoder.getVelocity());
     inputs.turnAppliedVolts = turnSparkMax.getAppliedOutput() * turnSparkMax.getBusVoltage();
@@ -200,7 +198,8 @@ public class ModuleIOSparkMax implements ModuleIO {
   }
 
   public void setDriveVelocity(double velocity) {
-    drivePidController.setReference(velocity, ControlType.kVelocity, 0, driveFeedforward.calculate(velocity));
+    drivePidController.setReference(
+        velocity, ControlType.kVelocity, 0, driveFeedforward.calculate(velocity));
   }
 
   public void setTurnAngle(Rotation2d angle) {
