@@ -93,6 +93,7 @@ public final class Constants {
     public static final TunableNumber kTurnP = new TunableNumber("Turn kP", 0.7);
     public static final TunableNumber kTurnI = new TunableNumber("Turn kI", 0.0);
     public static final TunableNumber kTurnD = new TunableNumber("Turn kD", 0.1);
+    public static final TunableNumber kTurnFF = new TunableNumber("Turn kFF", 0.0);
 
     public static final TunableNumber kDriveSimS = new TunableNumber("Drive Sim kS", 0.0);
     public static final TunableNumber kDriveSimV = new TunableNumber("Drive Sim kV", 0.0);
