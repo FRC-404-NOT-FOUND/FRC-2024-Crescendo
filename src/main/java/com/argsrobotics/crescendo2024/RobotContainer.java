@@ -21,9 +21,9 @@ import static com.argsrobotics.crescendo2024.Constants.Drive.kFrontLeftChassisAn
 import static com.argsrobotics.crescendo2024.Constants.Drive.kFrontRightChassisAngularOffset;
 
 import com.argsrobotics.crescendo2024.commands.DriveCommands;
+// import com.argsrobotics.crescendo2024.commands.TuneDrivePID;
 import com.argsrobotics.crescendo2024.oi.DriverOI;
 import com.argsrobotics.crescendo2024.oi.DriverOIXBox;
-import com.argsrobotics.crescendo2024.subsystems.GenericSwerveDrive;
 import com.argsrobotics.crescendo2024.subsystems.arm.Arm;
 import com.argsrobotics.crescendo2024.subsystems.arm.ArmIO;
 import com.argsrobotics.crescendo2024.subsystems.arm.ArmIONeo;
@@ -49,7 +49,7 @@ import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
  */
 public class RobotContainer {
   // Subsystems
-  public final GenericSwerveDrive drive;
+  public final Drive drive;
   public final Vision vision;
   public final Arm arm;
 
@@ -145,16 +145,14 @@ public class RobotContainer {
    * edu.wpi.first.wpilibj2.command.button.JoystickButton}.
    */
   private void configureButtonBindings() {
-    drive
-        .getDriveSubsystem()
-        .setDefaultCommand(
-            DriveCommands.joystickDrive(
-                drive,
-                oi::getDriveX,
-                oi::getDriveY,
-                oi::getDriveZ,
-                oi::getCenterOfRotationX,
-                oi::getCenterOfRotationY));
+    drive.setDefaultCommand(
+        DriveCommands.joystickDrive(
+            drive,
+            oi::getDriveY,
+            oi::getDriveX,
+            oi::getDriveZ,
+            oi::getCenterOfRotationX,
+            oi::getCenterOfRotationY));
 
     // arm.setDefaultCommand(new TuneArmPID(arm));
 

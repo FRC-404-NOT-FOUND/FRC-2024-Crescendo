@@ -21,11 +21,11 @@ import edu.wpi.first.wpilibj2.command.Command;
 public class TuneDrivePID extends Command {
   private final Drive drive;
 
-  public TuneDrivePID(Drive d) {
-    this.drive = d;
+  public TuneDrivePID(Drive drive) {
+    this.drive = drive;
     SmartDashboard.putNumber("Drive/VelocitySetpointTuning", 0);
     SmartDashboard.putNumber("Drive/AngleSetpointTuning", 0);
-    addRequirements(this.drive);
+    addRequirements(this.drive.getDriveSubsystem());
   }
 
   @Override

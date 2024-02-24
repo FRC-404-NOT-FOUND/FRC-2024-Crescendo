@@ -13,8 +13,8 @@
 
 package com.argsrobotics.crescendo2024;
 
-import com.argsrobotics.crescendo2024.subsystems.GenericSwerveDrive;
 import com.argsrobotics.crescendo2024.subsystems.arm.Arm;
+import com.argsrobotics.crescendo2024.subsystems.drive.Drive;
 import com.argsrobotics.crescendo2024.subsystems.vision.Vision;
 import com.argsrobotics.crescendo2024.subsystems.vision.VisionCameraIO.Mode;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -24,7 +24,7 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 public class RobotState {
   private static RobotState currentRobotState = new RobotState();
 
-  private static GenericSwerveDrive drivetrain;
+  private static Drive drivetrain;
   private static Vision vision;
   private static Arm arm;
 
@@ -43,7 +43,7 @@ public class RobotState {
     drivetrain.addVisionMeasurement(pose, timestamp);
   }
 
-  public static GenericSwerveDrive getDrivetrain() {
+  public static Drive getDrivetrain() {
     return drivetrain;
   }
 
@@ -55,7 +55,7 @@ public class RobotState {
     return arm;
   }
 
-  public static void setDrivetrain(GenericSwerveDrive drivetrain) {
+  public static void setDrivetrain(Drive drivetrain) {
     RobotState.drivetrain = drivetrain;
   }
 

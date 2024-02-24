@@ -31,7 +31,6 @@ import static com.argsrobotics.crescendo2024.Constants.Drive.kTrackWidthY;
 import static com.argsrobotics.crescendo2024.Constants.kTuningMode;
 
 import com.argsrobotics.crescendo2024.RobotState;
-import com.argsrobotics.crescendo2024.subsystems.GenericSwerveDrive;
 import com.argsrobotics.crescendo2024.util.AdvancedSwerveKinematics;
 import com.argsrobotics.crescendo2024.util.LocalADStarAK;
 import com.argsrobotics.crescendo2024.util.SwerveUtils;
@@ -75,19 +74,26 @@ import org.littletonrobotics.junction.Logger;
  * This is the class for the main drive subsystem. It doesn't really do much. Most of it is just
  * odometry code (as usual).
  */
-public class Drive extends SubsystemBase implements AutoCloseable, GenericSwerveDrive {
+public class Drive extends SubsystemBase implements AutoCloseable {
   public static final Lock odometryLock = new ReentrantLock();
   private final GyroIO gyroIO;
   private final GyroIOInputsAutoLogged gyroInputs = new GyroIOInputsAutoLogged();
   private final Module[] modules = new Module[4]; // FL, FR, BL, BR
 
-  private final SwerveDrivePoseEstimator estimator;
-
   private AdvancedSwerveKinematics kinematics =
       new AdvancedSwerveKinematics(getModuleTranslations());
   private Pose2d pose = new Pose2d();
-  private Rotation2d lastGyroRotation = new Rotation2d();
-  private Rotation2d gyroOffset;
+
+  private Rotation2d rawGyroRotation = new Rotation2d();
+  private SwerveModulePosition[] lastModulePositions = // For delta tracking
+      new SwerveModulePosition[] {
+        new SwerveModulePosition(),
+        new SwerveModulePosition(),
+        new SwerveModulePosition(),
+        new SwerveModulePosition()
+      };
+  private SwerveDrivePoseEstimator estimator =
+      new SwerveDrivePoseEstimator(kinematics, rawGyroRotation, lastModulePositions, new Pose2d());
 
   private final SysIdRoutine driveRoutine;
 
@@ -116,19 +122,17 @@ public class Drive extends SubsystemBase implements AutoCloseable, GenericSwerve
     modules[2] = new Module(blModuleIO, 2);
     modules[3] = new Module(brModuleIO, 3);
 
-    updateOdometry();
+    SparkMaxOdometryThread.getInstance().start();
 
-    estimator =
-        new SwerveDrivePoseEstimator(
-            kinematics, gyroInputs.yawPosition, getModulePositions(), pose);
-    gyroOffset = gyroInputs.yawPosition.minus(pose.getRotation());
+    updateOdometry();
 
     RobotState.getCurrentRobotState().currentPose = pose;
     RobotState.getCurrentRobotState().currentModuleStates = getModuleStates();
 
     driveRoutine =
         new SysIdRoutine(
-            new SysIdRoutine.Config(),
+            new SysIdRoutine.Config(
+                Units.Volts.per(Units.Second).of(2), Units.Volts.of(1), Units.Second.of(3)),
             new SysIdRoutine.Mechanism(this::runCharacterizationVolts, null, getDriveSubsystem()));
     angleRoutine =
         new SysIdRoutine(
@@ -198,53 +202,37 @@ public class Drive extends SubsystemBase implements AutoCloseable, GenericSwerve
       Logger.recordOutput("SwerveStates/SetpointsOptimized", new SwerveModuleState[] {});
     }
 
-    int deltaCount =
-        gyroInputs.connected ? gyroInputs.odometryYawPositions.length : Integer.MAX_VALUE;
-    for (int i = 0; i < 4; i++) {
-      deltaCount = Math.min(deltaCount, modules[i].getPositionDeltas().length);
-    }
-
-    Pose2d latestPose = pose;
-
-    for (int deltaIndex = 0; deltaIndex < deltaCount; deltaIndex++) {
-      // Read wheel deltas from each module
-      SwerveModulePosition[] wheelDeltas = new SwerveModulePosition[4];
-      double timestamp = 0.0;
+    double[] sampleTimestamps =
+        modules[0].getOdometryTimestamps(); // All signals are sampled together
+    int sampleCount = sampleTimestamps.length;
+    for (int i = 0; i < sampleCount; i++) {
+      // Read wheel positions and deltas from each module
+      SwerveModulePosition[] modulePositions = new SwerveModulePosition[4];
+      SwerveModulePosition[] moduleDeltas = new SwerveModulePosition[4];
       for (int moduleIndex = 0; moduleIndex < 4; moduleIndex++) {
-        timestamp += modules[moduleIndex].getPositionDeltaTimestamps()[deltaIndex];
-        wheelDeltas[moduleIndex] = modules[moduleIndex].getPositionDeltas()[deltaIndex];
+        modulePositions[moduleIndex] = modules[moduleIndex].getOdometryPositions()[i];
+        moduleDeltas[moduleIndex] =
+            new SwerveModulePosition(
+                modulePositions[moduleIndex].distanceMeters
+                    - lastModulePositions[moduleIndex].distanceMeters,
+                modulePositions[moduleIndex].angle);
+        lastModulePositions[moduleIndex] = modulePositions[moduleIndex];
       }
 
-      // Get the average of the times of odometry samples.
-      timestamp /= 4.0;
-
-      Rotation2d rotation;
-      Twist2d latestTwist = kinematics.toTwist2d(wheelDeltas);
-
-      // Initial estimate of latest pose to use as a basis for rotation.
-      latestPose = latestPose.exp(latestTwist);
-
-      // We'll probabaly never need this but just in case and because AdvantageKit does it it
-      // "theoretically" works without the gyro.
+      // Update gyro angle
       if (gyroInputs.connected) {
-        // If the gyro is connected, replace the theta component of the twist
-        // with the change in angle since the last sample.
-        Rotation2d gyroRotation = gyroInputs.odometryYawPositions[deltaIndex];
-        lastGyroRotation = gyroRotation;
-        rotation = gyroRotation;
+        // Use the real gyro angle
+        rawGyroRotation = gyroInputs.odometryYawPositions[i];
       } else {
-        // If the gyro is not connected, get the latest pose and use that rotation.
-        rotation = latestPose.getRotation().plus(gyroOffset);
+        // Use the angle delta from the kinematics and module deltas
+        Twist2d twist = kinematics.toTwist2d(moduleDeltas);
+        rawGyroRotation = rawGyroRotation.plus(new Rotation2d(twist.dtheta));
       }
 
-      // Because we're using deltas to update,
-      // adding the timestampe will make it more accurate so it can get a better measurement of when
-      // we were at that position since it uses a low-pass filter which is time-based.
-      latestPose = estimator.updateWithTime(timestamp, rotation, wheelDeltas);
+      // Apply update
+      estimator.updateWithTime(sampleTimestamps[i], rawGyroRotation, modulePositions);
     }
 
-    // Tecnically we could just do pose = latestPose but just in case a vision update happens we'll
-    // do this. There's really no point though.
     pose = estimator.getEstimatedPosition();
 
     RobotState.getCurrentRobotState().currentPose = pose;
@@ -266,9 +254,13 @@ public class Drive extends SubsystemBase implements AutoCloseable, GenericSwerve
     Logger.processInputs("Drive/Gyro", gyroInputs);
   }
 
+  /**
+   * Run an exact setpoint <i>for tuning only</i> as it forces it to the exact angle instead of the
+   * optimized one
+   */
   public void runSetpoint(double velocity, Rotation2d angle) {
     for (var module : modules) {
-      module.runSetpoint(new SwerveModuleState(velocity, angle));
+      module.runSetpoint(new SwerveModuleState(velocity, angle), true);
     }
   }
 
@@ -277,7 +269,6 @@ public class Drive extends SubsystemBase implements AutoCloseable, GenericSwerve
    *
    * @param speeds Speeds in meters/sec
    * @param centerOfRot Center of rotation of the robot in meters
-   * @param rateLimited Whether to use rate limiting
    */
   public void runVelocity(ChassisSpeeds speeds, Translation2d centerOfRot) {
     // Calculate module setpoints
@@ -290,7 +281,6 @@ public class Drive extends SubsystemBase implements AutoCloseable, GenericSwerve
     // Send setpoints to modules
     SwerveModuleState[] optimizedSetpointStates = new SwerveModuleState[4];
     for (int i = 0; i < 4; i++) {
-      setpointStates[i].angle = setpointStates[i].angle.plus(modules[i].getAngularOffset());
       // The module returns the optimized state, useful for logging
       optimizedSetpointStates[i] = modules[i].runSetpoint(setpointStates[i]);
     }
@@ -298,6 +288,15 @@ public class Drive extends SubsystemBase implements AutoCloseable, GenericSwerve
     // Log setpoint states
     Logger.recordOutput("SwerveStates/Setpoints", setpointStates);
     Logger.recordOutput("SwerveStates/SetpointsOptimized", optimizedSetpointStates);
+  }
+
+  /**
+   * Runs the drive at the desired velocity.
+   *
+   * @param speeds Speeds in meters/sec
+   */
+  public void runVelocity(ChassisSpeeds speeds) {
+    runVelocity(speeds, new Translation2d());
   }
 
   /** Calculate the applied slew rate based on the current ChassisSpeeds */
@@ -502,13 +501,8 @@ public class Drive extends SubsystemBase implements AutoCloseable, GenericSwerve
 
   /** Resets the current odometry pose. */
   public void resetOdometry(Pose2d pose) {
-    SwerveModulePosition[] positions = new SwerveModulePosition[4];
-    for (int i = 0; i < 4; i++) {
-      positions[i] = modules[i].getPosition();
-    }
-    estimator.resetPosition(lastGyroRotation, positions, pose);
+    estimator.resetPosition(rawGyroRotation, getModulePositions(), pose);
     this.pose = pose;
-    gyroOffset = lastGyroRotation.minus(pose.getRotation());
     RobotState.getCurrentRobotState().currentPose = pose;
   }
 
@@ -528,7 +522,6 @@ public class Drive extends SubsystemBase implements AutoCloseable, GenericSwerve
   }
 
   public void close() {
-    SparkMaxOdometryThread.getInstance().close();
     gyroIO.close();
     for (var module : modules) {
       module.close();

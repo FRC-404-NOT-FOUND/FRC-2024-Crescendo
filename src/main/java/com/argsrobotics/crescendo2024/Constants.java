@@ -84,15 +84,15 @@ public final class Constants {
     public static final TunableNumber kDriftRate = new TunableNumber("Drive Drift Rate", 1);
 
     // PID/FF constants
-    public static final TunableNumber kDriveS = new TunableNumber("Drive kS", 0.07067);
-    public static final TunableNumber kDriveV = new TunableNumber("Drive kV", 0.9445);
-    public static final TunableNumber kDriveP = new TunableNumber("Drive kP", 0.06);
+    public static final TunableNumber kDriveS = new TunableNumber("Drive kS", 0.12);
+    public static final TunableNumber kDriveV = new TunableNumber("Drive kV", 2.4);
+    public static final TunableNumber kDriveP = new TunableNumber("Drive kP", 0.2);
     public static final TunableNumber kDriveI = new TunableNumber("Drive kI", 0.0);
-    public static final TunableNumber kDriveD = new TunableNumber("Drive kD", 0.0001);
+    public static final TunableNumber kDriveD = new TunableNumber("Drive kD", 0.01);
 
-    public static final TunableNumber kTurnP = new TunableNumber("Turn kP", 0.7);
+    public static final TunableNumber kTurnP = new TunableNumber("Turn kP", 3.0);
     public static final TunableNumber kTurnI = new TunableNumber("Turn kI", 0.0);
-    public static final TunableNumber kTurnD = new TunableNumber("Turn kD", 0.1);
+    public static final TunableNumber kTurnD = new TunableNumber("Turn kD", 0.01);
     public static final TunableNumber kTurnFF = new TunableNumber("Turn kFF", 0.0);
 
     public static final TunableNumber kDriveSimS = new TunableNumber("Drive Sim kS", 0.0);
