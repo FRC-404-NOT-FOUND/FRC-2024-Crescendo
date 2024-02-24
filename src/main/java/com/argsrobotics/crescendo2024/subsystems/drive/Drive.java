@@ -30,6 +30,7 @@ import static com.argsrobotics.crescendo2024.Constants.Drive.kTrackWidthX;
 import static com.argsrobotics.crescendo2024.Constants.Drive.kTrackWidthY;
 import static com.argsrobotics.crescendo2024.Constants.kTuningMode;
 
+import com.argsrobotics.crescendo2024.FieldConstants;
 import com.argsrobotics.crescendo2024.RobotState;
 import com.argsrobotics.crescendo2024.util.AdvancedSwerveKinematics;
 import com.argsrobotics.crescendo2024.util.LocalADStarAK;
@@ -57,7 +58,6 @@ import edu.wpi.first.units.Units;
 import edu.wpi.first.units.Voltage;
 import edu.wpi.first.util.WPIUtilJNI;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -124,20 +124,15 @@ public class Drive extends SubsystemBase implements AutoCloseable {
 
     SparkMaxOdometryThread.getInstance().start();
 
-    updateOdometry();
-
-    RobotState.getCurrentRobotState().currentPose = pose;
-    RobotState.getCurrentRobotState().currentModuleStates = getModuleStates();
-
     driveRoutine =
         new SysIdRoutine(
             new SysIdRoutine.Config(
                 Units.Volts.per(Units.Second).of(2), Units.Volts.of(1), Units.Second.of(3)),
-            new SysIdRoutine.Mechanism(this::runCharacterizationVolts, null, getDriveSubsystem()));
+            new SysIdRoutine.Mechanism(this::runCharacterizationVolts, null, this));
     angleRoutine =
         new SysIdRoutine(
             new SysIdRoutine.Config(),
-            new SysIdRoutine.Mechanism(this::runAngleCharacterization, null, getDriveSubsystem()));
+            new SysIdRoutine.Mechanism(this::runAngleCharacterization, null, this));
 
     // Configure AutoBuilder for PathPlanner
     // PathPlanner doesn't let you dynamically update PID values for tuning.
@@ -157,10 +152,7 @@ public class Drive extends SubsystemBase implements AutoCloseable {
             kMaxLinearSpeed,
             kDrivebaseRadius,
             new ReplanningConfig()),
-        () ->
-            DriverStation.getAlliance().isPresent()
-                ? DriverStation.getAlliance().get() == Alliance.Red
-                : false,
+        FieldConstants::shouldFlipPoint,
         this);
 
     Pathfinding.setPathfinder(new LocalADStarAK());
@@ -182,7 +174,7 @@ public class Drive extends SubsystemBase implements AutoCloseable {
       driftRate = kDriftRate.get();
     }
 
-    updateOdometry();
+    processInputs();
 
     for (int i = 0; i < modules.length; i++) {
       modules[i].periodic();
@@ -243,8 +235,8 @@ public class Drive extends SubsystemBase implements AutoCloseable {
     SmartDashboard.putData(field);
   }
 
-  /** Updates the odometry. */
-  public void updateOdometry() {
+  /** Process module and gyro inputs. */
+  public void processInputs() {
     odometryLock.lock(); // Prevents odometry updates while reading data
     gyroIO.updateInputs(gyroInputs);
     for (var module : modules) {
@@ -271,7 +263,7 @@ public class Drive extends SubsystemBase implements AutoCloseable {
    * @param centerOfRot Center of rotation of the robot in meters
    */
   public void runVelocity(ChassisSpeeds speeds, Translation2d centerOfRot) {
-    // Calculate module setpoints
+    // This is basically the same as ChassisSpeeds.discretize() but a little bit better (I hope).
     ChassisSpeeds discreteSpeeds = AdvancedSwerveKinematics.correctForDynamics(speeds, driftRate);
 
     SwerveModuleState[] setpointStates =
@@ -303,23 +295,20 @@ public class Drive extends SubsystemBase implements AutoCloseable {
   public ChassisSpeeds calculateSlewRate(
       double translationDirection, double translationMagnitude, double omega) {
     // Alright so I saw this in the Rev example code and wasn't sure why they were converting the
-    // speeds to
-    // polar coordinates until I tried to do it myself. Here's the explanation because I and
-    // others will probably forget.
-    // The way slew rate limiters work is by keeping track of the past values of a variable and
-    // limiting the rate of change.
-    // You cannot have a two variable rate limiter (well you could but whatever), so by
-    // determining the polar coordinates of the speeds
-    // (r and theta, distance and angle or in this context speed and direction),
-    // You can later undo it using trigonometry but combine the variables into one so that you can
-    // limit the rates equally as well as limiting direction change.
+    // speeds to polar coordinates until I tried to do it myself. Here's the explanation because I
+    // and others will probably forget. The way slew rate limiters work is by keeping track of the
+    // past values of a variable and limiting the rate of change. You cannot have a two variable
+    // rate limiter (well you could but whatever), so by determining the polar coordinates of the
+    // speeds (r and theta, distance and angle or in this context speed and direction), You can
+    // later undo it using trigonometry but combine the variables into one so that you can limit the
+    // rates equally as well as limiting direction change.
 
     double directionSlewRate;
     if (currentTranslationMag != 0.0) {
       directionSlewRate = Math.abs(kDirectionSlewRate / currentTranslationMag);
     } else {
-      directionSlewRate =
-          500.0; // some high number that means the slew rate is effectively instantaneous
+      // some high number that means the slew rate is effectively instantaneous
+      directionSlewRate = 500.0;
     }
 
     double currentTime = WPIUtilJNI.now() * 1e-6;
@@ -373,17 +362,13 @@ public class Drive extends SubsystemBase implements AutoCloseable {
   /** Pathfind to the starting point and then follow a path (PathPlanner or Choreo) */
   public Command followPath(PathPlannerPath path) {
     return AutoBuilder.pathfindThenFollowPath(
-        path,
-        new PathConstraints(
-            kMaxLinearSpeed, kDirectionSlewRate, kMaxAngularSpeed, kRotationalSlewRate));
+        path, new PathConstraints(kMaxLinearSpeed, 3.0, kMaxAngularSpeed, 3.0));
   }
 
   /** Pathfind to a specific point */
   public Command driveToPose(Pose2d point) {
-    return AutoBuilder.pathfindToPose(
-        point,
-        new PathConstraints(
-            kMaxLinearSpeed, kDirectionSlewRate, kMaxAngularSpeed, kRotationalSlewRate));
+    return AutoBuilder.pathfindToPoseFlipped(
+        point, new PathConstraints(kMaxLinearSpeed, 3.0, kMaxAngularSpeed, 3.0));
   }
 
   /** Follow an auto routine */
@@ -501,7 +486,7 @@ public class Drive extends SubsystemBase implements AutoCloseable {
 
   /** Resets the current odometry pose. */
   public void resetOdometry(Pose2d pose) {
-    estimator.resetPosition(rawGyroRotation, getModulePositions(), pose);
+    estimator.resetPosition(gyroInputs.yawPosition, getModulePositions(), pose);
     this.pose = pose;
     RobotState.getCurrentRobotState().currentPose = pose;
   }
@@ -526,10 +511,6 @@ public class Drive extends SubsystemBase implements AutoCloseable {
     for (var module : modules) {
       module.close();
     }
-  }
-
-  public SubsystemBase getDriveSubsystem() {
-    return this;
   }
 
   /** Returns an array of module translations. */

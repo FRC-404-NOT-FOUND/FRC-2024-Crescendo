@@ -55,7 +55,7 @@ public class Arm extends SubsystemBase implements AutoCloseable {
   public void setAngle(Rotation2d angle) {
     if (angle.equals(kZeroAngle)) {
       io.setPosition(
-          (angle.minus(kZeroAngle).plus(Rotation2d.fromDegrees(2))).getRotations() * kGearRatio);
+          (angle.minus(kZeroAngle).plus(Rotation2d.fromDegrees(1))).getRotations() * kGearRatio);
     } else {
       io.setPosition((angle.minus(kZeroAngle)).getRotations() * kGearRatio);
     }

@@ -25,7 +25,7 @@ public class TuneDrivePID extends Command {
     this.drive = drive;
     SmartDashboard.putNumber("Drive/VelocitySetpointTuning", 0);
     SmartDashboard.putNumber("Drive/AngleSetpointTuning", 0);
-    addRequirements(this.drive.getDriveSubsystem());
+    addRequirements(this.drive);
   }
 
   @Override

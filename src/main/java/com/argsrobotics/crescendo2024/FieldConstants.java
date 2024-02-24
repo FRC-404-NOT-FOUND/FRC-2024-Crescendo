@@ -18,6 +18,8 @@ import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 
 public class FieldConstants {
   public static AprilTagFieldLayout aprilTags =
@@ -44,4 +46,10 @@ public class FieldConstants {
   public static Pose2d climbLeft = new Pose2d(0.0, 0.0, new Rotation2d(0.0));
   public static Pose2d climbRight = new Pose2d(0.0, 0.0, new Rotation2d(0.0));
   public static Pose2d climbCenter = new Pose2d(0.0, 0.0, new Rotation2d(0.0));
+
+  public static boolean shouldFlipPoint() {
+    return DriverStation.getAlliance().isPresent()
+        ? DriverStation.getAlliance().get() == Alliance.Red
+        : false;
+  }
 }

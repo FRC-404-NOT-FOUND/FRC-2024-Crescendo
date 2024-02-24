@@ -67,7 +67,7 @@ public class DriveCommands {
           drive.runVelocity(
               ChassisSpeeds.fromFieldRelativeSpeeds(speeds, new Rotation2d()), centerOfRot);
         },
-        drive.getDriveSubsystem());
+        drive);
   }
 
   /**
