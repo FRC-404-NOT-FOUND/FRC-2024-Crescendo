@@ -49,8 +49,10 @@ public final class Constants {
     public static final double kBackLeftChassisAngularOffset = Math.PI;
     public static final double kBackRightChassisAngularOffset = Math.PI / 2;
 
-    public static final double kTrackWidthY = Units.inchesToMeters(28.0);
-    public static final double kTrackWidthX = Units.inchesToMeters(28.0);
+    // Track width is the distance from the center of each wheel to the other center of each wheel
+    // (oops)
+    public static final double kTrackWidthY = Units.inchesToMeters(24.0);
+    public static final double kTrackWidthX = Units.inchesToMeters(24.0);
     public static final double kDrivebaseRadius =
         Math.hypot(kTrackWidthX / 2.0, kTrackWidthY / 2.0);
 
@@ -66,16 +68,15 @@ public final class Constants {
 
     // Slew Rate
     // Quick explanation: Derivatives are the rate of change of a graph, basically a graph of all of
-    // the slopes.
-    // Slew rates limit the rate of change of a variable, and the parameters are given in
-    // units/second.
-    // We are trying to limit the rate of change of the speed (magnitude) of a robot, measured in
-    // m/sec, direction, measured in radians, and rotational speed, measured in radians/sec.
-    // So the units of each variable would be as follows. See my comment in Drive.java for more
-    // details on how we calculate this.
-    public static final double kMagnitudeSlewRate = 1.8; // m/sec^2
-    public static final double kDirectionSlewRate = 1.2; // rad/sec
-    public static final double kRotationalSlewRate = 2.0; // rad/sec^2
+    // the slopes. Slew rates limit the rate of change of a variable, and the parameters are given
+    // in units/second. We are trying to limit the rate of change of the velocity (so the
+    // acceleration) of a robot, measured in m/sec, direction, measured in radians, and rotational
+    // speed, measured in radians/sec. In this case, slew rate is applied before the actual speeds,
+    // however, so the units are percentages instead. See my comment in Drive.java for more details
+    // on how we calculate this.
+    public static final double kMagnitudeSlewRate = 1.8; // %m/sec^2
+    public static final double kDirectionSlewRate = 1.2; // %rad/sec
+    public static final double kRotationalSlewRate = 2.0; // %(rad/sec)/sec
 
     // Drift rate is the tuned number that represents the rotational drift rate of the robot while
     // turning and driving straight simulatneously. This provides a simple alternative to using
