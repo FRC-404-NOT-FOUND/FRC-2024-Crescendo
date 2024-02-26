@@ -19,6 +19,7 @@ import static com.argsrobotics.crescendo2024.Constants.Drive.kBackLeftChassisAng
 import static com.argsrobotics.crescendo2024.Constants.Drive.kBackRightChassisAngularOffset;
 import static com.argsrobotics.crescendo2024.Constants.Drive.kFrontLeftChassisAngularOffset;
 import static com.argsrobotics.crescendo2024.Constants.Drive.kFrontRightChassisAngularOffset;
+import static com.argsrobotics.crescendo2024.Constants.Intake.kIntakeMotor;
 
 import com.argsrobotics.crescendo2024.commands.DriveCommands;
 // import com.argsrobotics.crescendo2024.commands.TuneDrivePID;
@@ -33,6 +34,9 @@ import com.argsrobotics.crescendo2024.subsystems.drive.GyroIOADIS16448;
 import com.argsrobotics.crescendo2024.subsystems.drive.ModuleIO;
 import com.argsrobotics.crescendo2024.subsystems.drive.ModuleIOSim;
 import com.argsrobotics.crescendo2024.subsystems.drive.ModuleIOSparkMax;
+import com.argsrobotics.crescendo2024.subsystems.intake.Intake;
+import com.argsrobotics.crescendo2024.subsystems.intake.IntakeIO;
+import com.argsrobotics.crescendo2024.subsystems.intake.IntakeIONeo;
 import com.argsrobotics.crescendo2024.subsystems.vision.Vision;
 import com.pathplanner.lib.auto.AutoBuilder;
 import edu.wpi.first.wpilibj.GenericHID;
@@ -52,6 +56,7 @@ public class RobotContainer {
   public final Drive drive;
   public final Vision vision;
   public final Arm arm;
+  public final Intake intake;
 
   // Controller
   private final DriverOI oi = new DriverOIXBox();
@@ -80,6 +85,8 @@ public class RobotContainer {
                 });
 
         arm = new Arm(new ArmIONeo(kLeftMotor, kRightMotor));
+
+        intake = new Intake(new IntakeIONeo(kIntakeMotor));
         break;
 
       case SIM:
@@ -100,6 +107,8 @@ public class RobotContainer {
                 });
 
         arm = new Arm(new ArmIO() {});
+
+        intake = new Intake(new IntakeIO() {});
         break;
 
       default:
@@ -120,12 +129,15 @@ public class RobotContainer {
                 });
 
         arm = new Arm(new ArmIO() {});
+
+        intake = new Intake(new IntakeIO() {});
         break;
     }
 
     RobotState.setDrivetrain(drive);
     RobotState.setVision(vision);
     RobotState.setArm(arm);
+    RobotState.setIntake(intake);
 
     // Set up auto routines
     autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());

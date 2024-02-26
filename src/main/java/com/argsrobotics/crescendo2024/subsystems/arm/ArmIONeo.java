@@ -96,7 +96,7 @@ public class ArmIONeo implements ArmIO {
     inputs.position = encoder.getPosition();
     inputs.velocity = encoder.getVelocity();
     inputs.current = leftMotor.getOutputCurrent();
-    inputs.voltage = leftMotor.getBusVoltage();
+    inputs.voltage = leftMotor.getBusVoltage() * leftMotor.getAppliedOutput();
   }
 
   @Override

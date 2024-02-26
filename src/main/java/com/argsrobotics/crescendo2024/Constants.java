@@ -138,4 +138,8 @@ public final class Constants {
     public static final int kLeftMotor = 11;
     public static final int kRightMotor = 12;
   }
+
+  public static class Intake {
+    public static final int kIntakeMotor = 9;
+  }
 }

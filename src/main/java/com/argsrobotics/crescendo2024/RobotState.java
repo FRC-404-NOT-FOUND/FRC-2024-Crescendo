@@ -15,6 +15,7 @@ package com.argsrobotics.crescendo2024;
 
 import com.argsrobotics.crescendo2024.subsystems.arm.Arm;
 import com.argsrobotics.crescendo2024.subsystems.drive.Drive;
+import com.argsrobotics.crescendo2024.subsystems.intake.Intake;
 import com.argsrobotics.crescendo2024.subsystems.vision.Vision;
 import com.argsrobotics.crescendo2024.subsystems.vision.VisionCameraIO.Mode;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -27,6 +28,7 @@ public class RobotState {
   private static Drive drivetrain;
   private static Vision vision;
   private static Arm arm;
+  private static Intake intake;
 
   public Pose2d currentPose = null;
   public SwerveModuleState[] currentModuleStates = null;
@@ -36,6 +38,8 @@ public class RobotState {
   public boolean hasTarget = false;
 
   public Rotation2d armAngle = null;
+
+  public double intakeSpeed = 0.0;
 
   public RobotState() {}
 
@@ -55,6 +59,10 @@ public class RobotState {
     return arm;
   }
 
+  public static Intake getIntake() {
+    return intake;
+  }
+
   public static void setDrivetrain(Drive drivetrain) {
     RobotState.drivetrain = drivetrain;
   }
@@ -65,6 +73,10 @@ public class RobotState {
 
   public static void setArm(Arm arm) {
     RobotState.arm = arm;
+  }
+
+  public static void setIntake(Intake intake) {
+    RobotState.intake = intake;
   }
 
   public static RobotState getCurrentRobotState() {
