@@ -142,4 +142,11 @@ public final class Constants {
   public static class Intake {
     public static final int kIntakeMotor = 9;
   }
+
+  public static class Shooter {
+    public static final int kTopLeftShooter = 12;
+    public static final int kTopRightShooter = 13;
+    public static final int kBottomLeftShooter = 14;
+    public static final int kBottomRightShooter = 15;
+  }
 }

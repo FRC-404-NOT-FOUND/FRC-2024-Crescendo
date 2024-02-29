@@ -20,6 +20,10 @@ import static com.argsrobotics.crescendo2024.Constants.Drive.kBackRightChassisAn
 import static com.argsrobotics.crescendo2024.Constants.Drive.kFrontLeftChassisAngularOffset;
 import static com.argsrobotics.crescendo2024.Constants.Drive.kFrontRightChassisAngularOffset;
 import static com.argsrobotics.crescendo2024.Constants.Intake.kIntakeMotor;
+import static com.argsrobotics.crescendo2024.Constants.Shooter.kTopLeftShooter;
+import static com.argsrobotics.crescendo2024.Constants.Shooter.kTopRightShooter;
+import static com.argsrobotics.crescendo2024.Constants.Shooter.kBottomLeftShooter;
+import static com.argsrobotics.crescendo2024.Constants.Shooter.kBottomRightShooter;
 
 import com.argsrobotics.crescendo2024.commands.DriveCommands;
 // import com.argsrobotics.crescendo2024.commands.TuneDrivePID;
@@ -37,6 +41,10 @@ import com.argsrobotics.crescendo2024.subsystems.drive.ModuleIOSparkMax;
 import com.argsrobotics.crescendo2024.subsystems.intake.Intake;
 import com.argsrobotics.crescendo2024.subsystems.intake.IntakeIO;
 import com.argsrobotics.crescendo2024.subsystems.intake.IntakeIONeo;
+import com.argsrobotics.crescendo2024.subsystems.shooter.Shooter;
+import com.argsrobotics.crescendo2024.subsystems.shooter.ShooterIO;
+import com.argsrobotics.crescendo2024.subsystems.shooter.ShooterIOSparkFlex;
+import com.argsrobotics.crescendo2024.subsystems.shooter.ShooterIOSparkMax;
 import com.argsrobotics.crescendo2024.subsystems.vision.Vision;
 import com.pathplanner.lib.auto.AutoBuilder;
 import edu.wpi.first.wpilibj.GenericHID;
@@ -57,6 +65,7 @@ public class RobotContainer {
   public final Vision vision;
   public final Arm arm;
   public final Intake intake;
+  public final Shooter shooter;
 
   // Controller
   private final DriverOI oi = new DriverOIXBox();
@@ -87,6 +96,8 @@ public class RobotContainer {
         arm = new Arm(new ArmIONeo(kLeftMotor, kRightMotor));
 
         intake = new Intake(new IntakeIONeo(kIntakeMotor));
+
+        shooter = new Shooter(new ShooterIOSparkFlex(kTopLeftShooter), new ShooterIOSparkFlex(kTopRightShooter), new ShooterIOSparkMax(kBottomLeftShooter), new ShooterIOSparkMax(kBottomRightShooter));
         break;
 
       case SIM:
@@ -109,6 +120,8 @@ public class RobotContainer {
         arm = new Arm(new ArmIO() {});
 
         intake = new Intake(new IntakeIO() {});
+
+        shooter = new Shooter(new ShooterIO() {}, new ShooterIO() {}, new ShooterIO() {}, new ShooterIO() {});
         break;
 
       default:
@@ -131,6 +144,8 @@ public class RobotContainer {
         arm = new Arm(new ArmIO() {});
 
         intake = new Intake(new IntakeIO() {});
+
+        shooter = new Shooter(new ShooterIO() {}, new ShooterIO() {}, new ShooterIO() {}, new ShooterIO() {});
         break;
     }
 
@@ -138,6 +153,7 @@ public class RobotContainer {
     RobotState.setVision(vision);
     RobotState.setArm(arm);
     RobotState.setIntake(intake);
+    RobotState.setShooter(shooter);
 
     // Set up auto routines
     autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
