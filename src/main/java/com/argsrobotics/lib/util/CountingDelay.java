@@ -16,22 +16,22 @@ package com.argsrobotics.lib.util;
 import edu.wpi.first.wpilibj.Timer;
 
 public class CountingDelay {
-    private final Timer timer = new Timer();
+  private final Timer timer = new Timer();
 
-    public CountingDelay() {
-        timer.start();
-    }
+  public CountingDelay() {
+    timer.start();
+  }
 
-    public boolean delay(double delay) {
-        if (timer.get() >= delay) {
-            return true;
-        } else {
-            return false;
-        }
+  public boolean delay(double delay) {
+    if (timer.get() >= delay) {
+      return true;
+    } else {
+      return false;
     }
+  }
 
-    public void reset() {
-        timer.reset();
-        timer.start();
-    }
+  public void reset() {
+    timer.reset();
+    timer.start();
+  }
 }
