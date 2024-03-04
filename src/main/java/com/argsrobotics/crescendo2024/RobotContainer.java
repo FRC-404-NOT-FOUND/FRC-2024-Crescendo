@@ -20,10 +20,10 @@ import static com.argsrobotics.crescendo2024.Constants.Drive.kBackRightChassisAn
 import static com.argsrobotics.crescendo2024.Constants.Drive.kFrontLeftChassisAngularOffset;
 import static com.argsrobotics.crescendo2024.Constants.Drive.kFrontRightChassisAngularOffset;
 import static com.argsrobotics.crescendo2024.Constants.Intake.kIntakeMotor;
-import static com.argsrobotics.crescendo2024.Constants.Shooter.kTopLeftShooter;
-import static com.argsrobotics.crescendo2024.Constants.Shooter.kTopRightShooter;
 import static com.argsrobotics.crescendo2024.Constants.Shooter.kBottomLeftShooter;
 import static com.argsrobotics.crescendo2024.Constants.Shooter.kBottomRightShooter;
+import static com.argsrobotics.crescendo2024.Constants.Shooter.kTopLeftShooter;
+import static com.argsrobotics.crescendo2024.Constants.Shooter.kTopRightShooter;
 
 import com.argsrobotics.crescendo2024.commands.DriveCommands;
 // import com.argsrobotics.crescendo2024.commands.TuneDrivePID;
@@ -97,7 +97,12 @@ public class RobotContainer {
 
         intake = new Intake(new IntakeIONeo(kIntakeMotor));
 
-        shooter = new Shooter(new ShooterIOSparkFlex(kTopLeftShooter), new ShooterIOSparkFlex(kTopRightShooter), new ShooterIOSparkMax(kBottomLeftShooter), new ShooterIOSparkMax(kBottomRightShooter));
+        shooter =
+            new Shooter(
+                new ShooterIOSparkFlex(kTopLeftShooter),
+                new ShooterIOSparkFlex(kTopRightShooter),
+                new ShooterIOSparkMax(kBottomLeftShooter),
+                new ShooterIOSparkMax(kBottomRightShooter));
         break;
 
       case SIM:
@@ -121,7 +126,9 @@ public class RobotContainer {
 
         intake = new Intake(new IntakeIO() {});
 
-        shooter = new Shooter(new ShooterIO() {}, new ShooterIO() {}, new ShooterIO() {}, new ShooterIO() {});
+        shooter =
+            new Shooter(
+                new ShooterIO() {}, new ShooterIO() {}, new ShooterIO() {}, new ShooterIO() {});
         break;
 
       default:
@@ -145,7 +152,9 @@ public class RobotContainer {
 
         intake = new Intake(new IntakeIO() {});
 
-        shooter = new Shooter(new ShooterIO() {}, new ShooterIO() {}, new ShooterIO() {}, new ShooterIO() {});
+        shooter =
+            new Shooter(
+                new ShooterIO() {}, new ShooterIO() {}, new ShooterIO() {}, new ShooterIO() {});
         break;
     }
 
