@@ -17,7 +17,6 @@ import com.argsrobotics.crescendo2024.RobotState;
 import com.argsrobotics.crescendo2024.subsystems.shooter.ShooterIO.ShooterSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
 public class Shooter extends SubsystemBase {
@@ -59,7 +58,7 @@ public class Shooter extends SubsystemBase {
     }
   }
 
-  @AutoLogOutput(key = "Shooter/Speeds")
+  // @AutoLogOutput(key = "Shooter/Speeds")
   public ShooterSpeeds getSpeeds() {
     ShooterSpeeds speeds = new ShooterSpeeds();
     for (int i = 0; i < motors.length; i++) {
@@ -70,6 +69,10 @@ public class Shooter extends SubsystemBase {
   }
 
   public Command shoot(ShooterSpeeds speeds) {
-    return run(() -> setSpeeds(speeds)).withTimeout(3).andThen(this::stop);
+    return run(() -> setSpeeds(speeds)).withTimeout(1.5).andThen(this::stop);
+  }
+
+  public Command feedBackwards() {
+    return runEnd(() -> setSpeeds(new ShooterSpeeds(0.1, -0.1, -0.1, 0.1)), this::stop);
   }
 }

@@ -33,4 +33,10 @@ public interface DriverOI {
   public Trigger getArmUpEnabled();
 
   public Trigger getArmDownEnabled();
+
+  public Trigger getIntake();
+
+  public Trigger getOuttake();
+
+  public Trigger getShoot();
 }

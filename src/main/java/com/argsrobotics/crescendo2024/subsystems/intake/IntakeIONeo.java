@@ -27,9 +27,8 @@ public class IntakeIONeo implements IntakeIO {
     intakeEncoder = intakeMotor.getEncoder();
 
     intakeMotor.restoreFactoryDefaults();
-    intakeMotor.setInverted(false);
+    intakeMotor.setInverted(true);
     intakeMotor.setSmartCurrentLimit(50);
-    intakeMotor.enableVoltageCompensation(12.0);
 
     intakeEncoder.setPosition(0.0);
     intakeEncoder.setMeasurementPeriod(10);

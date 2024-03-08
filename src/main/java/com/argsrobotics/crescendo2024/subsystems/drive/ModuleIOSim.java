@@ -45,7 +45,6 @@ public class ModuleIOSim implements ModuleIO {
   private final PIDController turnPidController =
       new PIDController(kTurnSimP.getDefault(), kTurnSimI.getDefault(), kTurnSimD.getDefault());
 
-  private final Rotation2d turnAbsoluteInitPosition = new Rotation2d(Math.random() * 2.0 * Math.PI);
   private double driveAppliedVolts = 0.0;
   private double turnAppliedVolts = 0.0;
 
@@ -81,7 +80,6 @@ public class ModuleIOSim implements ModuleIO {
     inputs.driveAppliedVolts = driveAppliedVolts;
     inputs.driveCurrentAmps = new double[] {Math.abs(driveCurrent)};
 
-    inputs.turnAbsolutePosition = new Rotation2d(turnPosition).plus(turnAbsoluteInitPosition);
     inputs.turnPosition = new Rotation2d(turnPosition);
     inputs.turnVelocityRadPerSec = turnVelocity;
     inputs.turnAppliedVolts = turnAppliedVolts;

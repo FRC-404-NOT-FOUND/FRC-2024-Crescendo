@@ -28,7 +28,6 @@ import com.revrobotics.SparkAbsoluteEncoder.Type;
 import com.revrobotics.SparkPIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.util.Units;
 import java.util.OptionalDouble;
 import java.util.Queue;
 
@@ -92,7 +91,7 @@ public class ModuleIOSparkMax implements ModuleIO {
     turnPidController = turnSparkMax.getPIDController();
 
     // Set current limits and enable voltage compensation
-    driveSparkMax.setSmartCurrentLimit(40);
+    driveSparkMax.setSmartCurrentLimit(50);
     turnSparkMax.setSmartCurrentLimit(20);
     driveSparkMax.enableVoltageCompensation(12.0);
     turnSparkMax.enableVoltageCompensation(12.0);
@@ -189,11 +188,15 @@ public class ModuleIOSparkMax implements ModuleIO {
     inputs.driveAppliedVolts = driveSparkMax.getAppliedOutput() * driveSparkMax.getBusVoltage();
     inputs.driveCurrentAmps = new double[] {driveSparkMax.getOutputCurrent()};
 
-    inputs.turnAbsolutePosition =
-        Rotation2d.fromRadians(turnEncoder.getPosition() - chassisAngularOffset);
-    inputs.turnPosition = Rotation2d.fromRadians(turnEncoder.getPosition() - chassisAngularOffset);
-    inputs.turnVelocityRadPerSec =
-        Units.rotationsPerMinuteToRadiansPerSecond(turnEncoder.getVelocity());
+    double position = turnEncoder.getPosition() - chassisAngularOffset;
+
+    // Stupid encoders
+    // if (SwerveUtils.angleDifference(position, inputs.turnPosition.getRadians()) <= 0.01) {
+    //   position = inputs.turnPosition.getRadians();
+    // }
+
+    inputs.turnPosition = Rotation2d.fromRadians(position);
+    inputs.turnVelocityRadPerSec = turnEncoder.getVelocity();
     inputs.turnAppliedVolts = turnSparkMax.getAppliedOutput() * turnSparkMax.getBusVoltage();
     inputs.turnCurrentAmps = new double[] {turnSparkMax.getOutputCurrent()};
 

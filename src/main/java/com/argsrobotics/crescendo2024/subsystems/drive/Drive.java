@@ -176,11 +176,12 @@ public class Drive extends SubsystemBase implements AutoCloseable {
 
     processInputs();
 
-    for (int i = 0; i < modules.length; i++) {
-      modules[i].periodic();
-      Logger.recordOutput(
-          "SwerveStates/Module" + i + "Velocity", modules[i].getVelocityMetersPerSec());
-      Logger.recordOutput("SwerveStates/Module" + i + "Angle", modules[i].getAngle().getDegrees());
+    for (var module : modules) {
+      module.periodic();
+      // Logger.recordOutput(
+      //     "SwerveStates/Module" + i + "Velocity", modules[i].getVelocityMetersPerSec());
+      // Logger.recordOutput("SwerveStates/Module" + i + "Angle",
+      // modules[i].getAngle().getDegrees());
     }
 
     if (RobotBase.isReal() && DriverStation.isDisabled()) {

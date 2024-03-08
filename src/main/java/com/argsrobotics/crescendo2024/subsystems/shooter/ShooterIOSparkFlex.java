@@ -13,6 +13,7 @@
 
 package com.argsrobotics.crescendo2024.subsystems.shooter;
 
+import com.revrobotics.CANSparkBase.IdleMode;
 import com.revrobotics.CANSparkFlex;
 import com.revrobotics.CANSparkLowLevel.MotorType;
 import com.revrobotics.RelativeEncoder;
@@ -31,6 +32,7 @@ public class ShooterIOSparkFlex implements ShooterIO {
     motor.setInverted(false);
     motor.setSmartCurrentLimit(40);
     motor.enableVoltageCompensation(12.0);
+    motor.setIdleMode(IdleMode.kBrake);
 
     motor.burnFlash();
   }

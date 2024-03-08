@@ -13,10 +13,10 @@
 
 package com.argsrobotics.crescendo2024.subsystems.arm;
 
-import static com.argsrobotics.crescendo2024.Constants.Arm.kGearRatio;
-import static com.argsrobotics.crescendo2024.Constants.Arm.kZeroAngle;
+import static com.argsrobotics.crescendo2024.Constants.Arm.kDownAngle;
 
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.RobotState;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -53,11 +53,12 @@ public class Arm extends SubsystemBase implements AutoCloseable {
    * @param angle the new angle to set
    */
   public void setAngle(Rotation2d angle) {
-    if (angle.equals(kZeroAngle)) {
-      io.setPosition(
-          (angle.minus(kZeroAngle).plus(Rotation2d.fromDegrees(1))).getRotations() * kGearRatio);
+    if (kDownAngle.getDegrees() > angle.getDegrees()) {
+      io.setPosition(kDownAngle.getRotations());
+    } else if (90 < angle.getDegrees()) {
+      io.setPosition(Units.radiansToRotations(90));
     } else {
-      io.setPosition((angle.minus(kZeroAngle)).getRotations() * kGearRatio);
+      io.setPosition(angle.getRotations());
     }
   }
 
@@ -67,7 +68,7 @@ public class Arm extends SubsystemBase implements AutoCloseable {
    * @return
    */
   public void setPercent(double percent) {
-    io.setPercent(percent);
+    io.setPercent(percent * 0.5);
   }
 
   /**
@@ -98,7 +99,7 @@ public class Arm extends SubsystemBase implements AutoCloseable {
    */
   @AutoLogOutput(key = "Arm/CurrentAngle")
   public Rotation2d getAngle() {
-    return Rotation2d.fromRotations(inputs.position / kGearRatio).plus(kZeroAngle);
+    return Rotation2d.fromRotations(inputs.position);
   }
 
   @Override

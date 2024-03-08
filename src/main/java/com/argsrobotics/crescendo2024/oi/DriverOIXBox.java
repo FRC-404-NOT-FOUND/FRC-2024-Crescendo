@@ -13,7 +13,6 @@
 
 package com.argsrobotics.crescendo2024.oi;
 
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 
@@ -55,21 +54,36 @@ public class DriverOIXBox implements DriverOI {
 
   @Override
   public double getArmUp() {
-    return MathUtil.applyDeadband(gamepad.getRightTriggerAxis(), 0.1);
+    return gamepad.getRightTriggerAxis();
   }
 
   @Override
   public double getArmDown() {
-    return -MathUtil.applyDeadband(gamepad.getLeftTriggerAxis(), 0.1);
+    return -gamepad.getLeftTriggerAxis();
   }
 
   @Override
   public Trigger getArmUpEnabled() {
-    return gamepad.rightTrigger();
+    return gamepad.rightTrigger(0.1);
   }
 
   @Override
   public Trigger getArmDownEnabled() {
-    return gamepad.leftTrigger();
+    return gamepad.leftTrigger(0.1);
+  }
+
+  @Override
+  public Trigger getIntake() {
+    return gamepad.a();
+  }
+
+  @Override
+  public Trigger getOuttake() {
+    return gamepad.b();
+  }
+
+  @Override
+  public Trigger getShoot() {
+    return gamepad.x();
   }
 }

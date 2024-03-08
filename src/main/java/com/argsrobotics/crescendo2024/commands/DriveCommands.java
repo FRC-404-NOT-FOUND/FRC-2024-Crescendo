@@ -40,11 +40,10 @@ public class DriveCommands {
     return Commands.run(
         () -> {
           // Apply deadband
-          double linearMagnitude =
-              MathUtil.applyDeadband(
-                  Math.hypot(xSupplier.getAsDouble(), ySupplier.getAsDouble()), kDriveDeadband);
-          Rotation2d linearDirection =
-              new Rotation2d(xSupplier.getAsDouble(), ySupplier.getAsDouble());
+          double x = MathUtil.applyDeadband(xSupplier.getAsDouble(), kDriveDeadband);
+          double y = MathUtil.applyDeadband(ySupplier.getAsDouble(), kDriveDeadband);
+          double linearMagnitude = Math.hypot(x, y);
+          Rotation2d linearDirection = new Rotation2d(x, y);
           double omega = MathUtil.applyDeadband(omegaSupplier.getAsDouble(), kDriveDeadband);
 
           double corX = MathUtil.applyDeadband(corXSupplier.getAsDouble(), kDriveDeadband);
@@ -65,7 +64,7 @@ public class DriveCommands {
 
           // Convert to field relative speeds & send command
           drive.runVelocity(
-              ChassisSpeeds.fromFieldRelativeSpeeds(speeds, new Rotation2d()), centerOfRot);
+              ChassisSpeeds.fromFieldRelativeSpeeds(speeds, drive.getHeading()), centerOfRot);
         },
         drive);
   }

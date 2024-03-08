@@ -17,19 +17,23 @@ import static com.argsrobotics.crescendo2024.Constants.Arm.*;
 import static com.argsrobotics.crescendo2024.Constants.kTuningMode;
 
 import com.revrobotics.CANSparkBase;
+import com.revrobotics.CANSparkBase.IdleMode;
+import com.revrobotics.CANSparkBase.SoftLimitDirection;
 import com.revrobotics.CANSparkLowLevel.MotorType;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.SparkPIDController;
+import edu.wpi.first.math.controller.ArmFeedforward;
+import edu.wpi.first.math.util.Units;
 
 public class ArmIONeo implements ArmIO {
   private final CANSparkMax leftMotor;
   private final CANSparkMax rightMotor;
-  private final RelativeEncoder encoder;
+  private final RelativeEncoder leftEncoder;
+  private final RelativeEncoder rightEncoder;
   private final SparkPIDController leftPidController;
   private final SparkPIDController rightPidController;
-
-  private double ff = kArmFF.get();
+  private ArmFeedforward ff = new ArmFeedforward(0, kArmFF.get(), 0);
 
   private Double positionSetpoint = null;
 
@@ -51,25 +55,53 @@ public class ArmIONeo implements ArmIO {
     leftMotor.enableVoltageCompensation(12.0);
     rightMotor.enableVoltageCompensation(12.0);
 
-    encoder = leftMotor.getEncoder();
-    encoder.setPosition(0.0);
-    encoder.setMeasurementPeriod(10);
-    encoder.setAverageDepth(2);
+    leftEncoder = leftMotor.getEncoder();
+    rightEncoder = rightMotor.getEncoder();
+
+    leftEncoder.setPositionConversionFactor(1 / kGearRatio);
+    leftEncoder.setVelocityConversionFactor(1 / kGearRatio);
+    rightEncoder.setPositionConversionFactor(1 / kGearRatio);
+    rightEncoder.setVelocityConversionFactor(1 / kGearRatio);
+
+    leftEncoder.setPosition(kZeroAngle.getRotations());
+    leftEncoder.setMeasurementPeriod(10);
+    leftEncoder.setAverageDepth(2);
+
+    rightEncoder.setPosition(kZeroAngle.getRotations());
+    rightEncoder.setMeasurementPeriod(10);
+    rightEncoder.setAverageDepth(2);
 
     leftPidController = leftMotor.getPIDController();
     rightPidController = rightMotor.getPIDController();
 
+    leftPidController.setFeedbackDevice(leftEncoder);
+    rightPidController.setFeedbackDevice(rightEncoder);
+
     leftPidController.setP(kArmP.get());
     leftPidController.setI(kArmI.get());
     leftPidController.setD(kArmD.get());
-    leftPidController.setFF(kArmFF.get());
+    leftPidController.setFF(0);
+
     rightPidController.setP(kArmP.get());
     rightPidController.setI(kArmI.get());
     rightPidController.setD(kArmD.get());
-    rightPidController.setFF(kArmFF.get());
+    rightPidController.setFF(0);
 
     leftMotor.setCANTimeout(0);
     rightMotor.setCANTimeout(0);
+
+    leftMotor.setIdleMode(IdleMode.kBrake);
+    rightMotor.setIdleMode(IdleMode.kBrake);
+
+    leftMotor.enableSoftLimit(SoftLimitDirection.kForward, true);
+    leftMotor.enableSoftLimit(SoftLimitDirection.kReverse, true);
+    rightMotor.enableSoftLimit(SoftLimitDirection.kForward, true);
+    rightMotor.enableSoftLimit(SoftLimitDirection.kReverse, true);
+
+    leftMotor.setSoftLimit(SoftLimitDirection.kForward, (float) Units.degreesToRotations(90));
+    leftMotor.setSoftLimit(SoftLimitDirection.kReverse, (float) kDownAngle.getRotations());
+    rightMotor.setSoftLimit(SoftLimitDirection.kForward, (float) Units.degreesToRotations(90));
+    rightMotor.setSoftLimit(SoftLimitDirection.kReverse, (float) kDownAngle.getRotations());
 
     leftMotor.burnFlash();
     rightMotor.burnFlash();
@@ -84,17 +116,24 @@ public class ArmIONeo implements ArmIO {
       rightPidController.setP(kArmP.get());
       rightPidController.setI(kArmI.get());
       rightPidController.setD(kArmD.get());
-      ff = kArmFF.get();
+      ff = new ArmFeedforward(0, kArmFF.get(), 0);
     }
 
     if (positionSetpoint != null) {
-      leftPidController.setFF((Math.cos(positionSetpoint) * ff) / positionSetpoint);
-      leftPidController.setReference(positionSetpoint, CANSparkBase.ControlType.kPosition);
-      rightPidController.setReference(positionSetpoint, CANSparkBase.ControlType.kPosition);
+      leftPidController.setReference(
+          positionSetpoint,
+          CANSparkBase.ControlType.kPosition,
+          0,
+          ff.calculate(positionSetpoint, 0));
+      rightPidController.setReference(
+          positionSetpoint,
+          CANSparkBase.ControlType.kPosition,
+          0,
+          ff.calculate(positionSetpoint, 0));
     }
 
-    inputs.position = encoder.getPosition();
-    inputs.velocity = encoder.getVelocity();
+    inputs.position = leftEncoder.getPosition();
+    inputs.velocity = leftEncoder.getVelocity();
     inputs.current = leftMotor.getOutputCurrent();
     inputs.voltage = leftMotor.getBusVoltage() * leftMotor.getAppliedOutput();
   }

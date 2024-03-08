@@ -20,12 +20,14 @@ import static com.argsrobotics.crescendo2024.Constants.Drive.kBackRightChassisAn
 import static com.argsrobotics.crescendo2024.Constants.Drive.kFrontLeftChassisAngularOffset;
 import static com.argsrobotics.crescendo2024.Constants.Drive.kFrontRightChassisAngularOffset;
 import static com.argsrobotics.crescendo2024.Constants.Intake.kIntakeMotor;
-import static com.argsrobotics.crescendo2024.Constants.Shooter.kTopLeftShooter;
-import static com.argsrobotics.crescendo2024.Constants.Shooter.kTopRightShooter;
 import static com.argsrobotics.crescendo2024.Constants.Shooter.kBottomLeftShooter;
 import static com.argsrobotics.crescendo2024.Constants.Shooter.kBottomRightShooter;
+import static com.argsrobotics.crescendo2024.Constants.Shooter.kTopLeftShooter;
+import static com.argsrobotics.crescendo2024.Constants.Shooter.kTopRightShooter;
 
 import com.argsrobotics.crescendo2024.commands.DriveCommands;
+import com.argsrobotics.crescendo2024.commands.auto.ResetPose;
+import com.argsrobotics.crescendo2024.commands.auto.ResetPose.Position;
 // import com.argsrobotics.crescendo2024.commands.TuneDrivePID;
 import com.argsrobotics.crescendo2024.oi.DriverOI;
 import com.argsrobotics.crescendo2024.oi.DriverOIXBox;
@@ -43,6 +45,7 @@ import com.argsrobotics.crescendo2024.subsystems.intake.IntakeIO;
 import com.argsrobotics.crescendo2024.subsystems.intake.IntakeIONeo;
 import com.argsrobotics.crescendo2024.subsystems.shooter.Shooter;
 import com.argsrobotics.crescendo2024.subsystems.shooter.ShooterIO;
+import com.argsrobotics.crescendo2024.subsystems.shooter.ShooterIO.ShooterSpeeds;
 import com.argsrobotics.crescendo2024.subsystems.shooter.ShooterIOSparkFlex;
 import com.argsrobotics.crescendo2024.subsystems.shooter.ShooterIOSparkMax;
 import com.argsrobotics.crescendo2024.subsystems.vision.Vision;
@@ -50,6 +53,7 @@ import com.pathplanner.lib.auto.AutoBuilder;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import java.util.HashMap;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
@@ -97,7 +101,12 @@ public class RobotContainer {
 
         intake = new Intake(new IntakeIONeo(kIntakeMotor));
 
-        shooter = new Shooter(new ShooterIOSparkFlex(kTopLeftShooter), new ShooterIOSparkFlex(kTopRightShooter), new ShooterIOSparkMax(kBottomLeftShooter), new ShooterIOSparkMax(kBottomRightShooter));
+        shooter =
+            new Shooter(
+                new ShooterIOSparkFlex(kTopLeftShooter),
+                new ShooterIOSparkFlex(kTopRightShooter),
+                new ShooterIOSparkMax(kBottomLeftShooter),
+                new ShooterIOSparkMax(kBottomRightShooter));
         break;
 
       case SIM:
@@ -121,7 +130,9 @@ public class RobotContainer {
 
         intake = new Intake(new IntakeIO() {});
 
-        shooter = new Shooter(new ShooterIO() {}, new ShooterIO() {}, new ShooterIO() {}, new ShooterIO() {});
+        shooter =
+            new Shooter(
+                new ShooterIO() {}, new ShooterIO() {}, new ShooterIO() {}, new ShooterIO() {});
         break;
 
       default:
@@ -145,7 +156,9 @@ public class RobotContainer {
 
         intake = new Intake(new IntakeIO() {});
 
-        shooter = new Shooter(new ShooterIO() {}, new ShooterIO() {}, new ShooterIO() {}, new ShooterIO() {});
+        shooter =
+            new Shooter(
+                new ShooterIO() {}, new ShooterIO() {}, new ShooterIO() {}, new ShooterIO() {});
         break;
     }
 
@@ -157,6 +170,10 @@ public class RobotContainer {
 
     // Set up auto routines
     autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
+
+    autoChooser.addOption("Left Nothing", new ResetPose(drive, Position.LEFT));
+    autoChooser.addOption("Center Nothing", new ResetPose(drive, Position.CENTER));
+    autoChooser.addOption("Right Nothing", new ResetPose(drive, Position.RIGHT));
 
     autoChooser.addOption(
         "Drive SysId Characterization",
@@ -186,6 +203,13 @@ public class RobotContainer {
 
     oi.getArmUpEnabled().whileTrue(arm.setArmSpeed(oi::getArmUp));
     oi.getArmDownEnabled().whileTrue(arm.setArmSpeed(oi::getArmDown));
+    oi.getIntake().onTrue(intake.intakeCommand(shooter.feedBackwards()));
+    oi.getOuttake().onTrue(intake.spitCommand());
+    oi.getShoot()
+        .onTrue(
+            Commands.parallel(
+                shooter.shoot(new ShooterSpeeds()),
+                Commands.waitSeconds(0.5).andThen(intake.feedCommand().withTimeout(1))));
     // drive.setDefaultCommand(new TuneDrivePID(drive));
   }
 

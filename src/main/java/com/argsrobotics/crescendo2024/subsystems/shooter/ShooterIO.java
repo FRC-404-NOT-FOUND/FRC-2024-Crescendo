@@ -22,6 +22,20 @@ public interface ShooterIO {
     public double bl;
     public double br;
 
+    public ShooterSpeeds(double topLeft, double topRight, double bottomLeft, double bottomRight) {
+      tl = topLeft;
+      tr = topRight;
+      bl = bottomLeft;
+      br = bottomRight;
+    }
+
+    public ShooterSpeeds() {
+      tl = -0.48;
+      tr = 0.5;
+      bl = 0.48;
+      br = -0.5;
+    }
+
     public void setIndex(int index, double speed) {
       switch (index) {
         case 0:

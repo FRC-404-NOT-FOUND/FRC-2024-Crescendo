@@ -91,7 +91,7 @@ public final class Constants {
     public static final TunableNumber kDriveI = new TunableNumber("Drive kI", 0.0);
     public static final TunableNumber kDriveD = new TunableNumber("Drive kD", 0.01);
 
-    public static final TunableNumber kTurnP = new TunableNumber("Turn kP", 3.0);
+    public static final TunableNumber kTurnP = new TunableNumber("Turn kP", 2.65);
     public static final TunableNumber kTurnI = new TunableNumber("Turn kI", 0.0);
     public static final TunableNumber kTurnD = new TunableNumber("Turn kD", 0.01);
     public static final TunableNumber kTurnFF = new TunableNumber("Turn kFF", 0.0);
@@ -128,8 +128,9 @@ public final class Constants {
     public static final TunableNumber kArmD = new TunableNumber("Arm kD", 0.002);
     public static final TunableNumber kArmFF = new TunableNumber("Arm kFF", 0.0);
 
-    public static final Rotation2d kZeroAngle = Rotation2d.fromDegrees(-12);
-    public static final double kGearRatio = (100.0 / 1.0) * (5.0 / 3.0);
+    public static final Rotation2d kZeroAngle = Rotation2d.fromDegrees(-4);
+    public static final Rotation2d kDownAngle = Rotation2d.fromDegrees(-4);
+    public static final double kGearRatio = (100.0 / 1.0) * (28.0 / 25.0);
 
     public static final Rotation2d kAmpAngle = new Rotation2d();
     public static final Rotation2d kClimbAngle = new Rotation2d();
@@ -144,9 +145,9 @@ public final class Constants {
   }
 
   public static class Shooter {
-    public static final int kTopLeftShooter = 12;
-    public static final int kTopRightShooter = 13;
-    public static final int kBottomLeftShooter = 14;
-    public static final int kBottomRightShooter = 15;
+    public static final int kTopLeftShooter = 13;
+    public static final int kTopRightShooter = 14;
+    public static final int kBottomLeftShooter = 15;
+    public static final int kBottomRightShooter = 16;
   }
 }
