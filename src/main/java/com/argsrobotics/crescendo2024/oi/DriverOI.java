@@ -39,4 +39,18 @@ public interface DriverOI {
   public Trigger getOuttake();
 
   public Trigger getShoot();
+
+  public Trigger getArmDownPosition();
+
+  public Trigger getArmAmpPosition();
+
+  public Trigger getArmPodiumPosition();
+
+  public Trigger getAmpShoot();
+
+  public Trigger getToggleLimitSwitch();
+
+  public Trigger getToggleFieldOriented();
+
+  public Trigger getClimbDown();
 }

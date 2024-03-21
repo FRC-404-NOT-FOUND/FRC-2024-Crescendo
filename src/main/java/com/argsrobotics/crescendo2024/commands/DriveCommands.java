@@ -22,6 +22,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 
 public class DriveCommands {
@@ -36,15 +37,16 @@ public class DriveCommands {
       DoubleSupplier ySupplier,
       DoubleSupplier omegaSupplier,
       DoubleSupplier corXSupplier,
-      DoubleSupplier corYSupplier) {
+      DoubleSupplier corYSupplier,
+      BooleanSupplier useFieldRelative) {
     return Commands.run(
         () -> {
           // Apply deadband
           double x = MathUtil.applyDeadband(xSupplier.getAsDouble(), kDriveDeadband);
-          double y = MathUtil.applyDeadband(ySupplier.getAsDouble(), kDriveDeadband);
+          double y = MathUtil.applyDeadband(ySupplier.getAsDouble(), kDriveDeadband) * 0.6;
           double linearMagnitude = Math.hypot(x, y);
           Rotation2d linearDirection = new Rotation2d(x, y);
-          double omega = MathUtil.applyDeadband(omegaSupplier.getAsDouble(), kDriveDeadband);
+          double omega = MathUtil.applyDeadband(omegaSupplier.getAsDouble(), kDriveDeadband) * 0.5;
 
           double corX = MathUtil.applyDeadband(corXSupplier.getAsDouble(), kDriveDeadband);
           double corY = MathUtil.applyDeadband(corYSupplier.getAsDouble(), kDriveDeadband);
@@ -62,9 +64,12 @@ public class DriveCommands {
           ChassisSpeeds speeds =
               drive.calculateSlewRate(linearDirection.getRadians(), linearMagnitude, omega);
 
+          if (useFieldRelative.getAsBoolean()) {
+            speeds = ChassisSpeeds.fromFieldRelativeSpeeds(speeds, drive.getHeading());
+          }
+
           // Convert to field relative speeds & send command
-          drive.runVelocity(
-              ChassisSpeeds.fromFieldRelativeSpeeds(speeds, drive.getHeading()), centerOfRot);
+          drive.runVelocity(speeds, centerOfRot);
         },
         drive);
   }
@@ -76,7 +81,9 @@ public class DriveCommands {
       Drive drive,
       DoubleSupplier xSupplier,
       DoubleSupplier ySupplier,
-      DoubleSupplier omegaSupplier) {
-    return joystickDrive(drive, xSupplier, ySupplier, omegaSupplier, () -> 0.0, () -> 0.0);
+      DoubleSupplier omegaSupplier,
+      BooleanSupplier useFieldRelative) {
+    return joystickDrive(
+        drive, xSupplier, ySupplier, omegaSupplier, () -> 0.0, () -> 0.0, useFieldRelative);
   }
 }

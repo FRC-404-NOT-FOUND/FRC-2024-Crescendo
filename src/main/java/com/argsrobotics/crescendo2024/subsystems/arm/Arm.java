@@ -14,11 +14,18 @@
 package com.argsrobotics.crescendo2024.subsystems.arm;
 
 import static com.argsrobotics.crescendo2024.Constants.Arm.kDownAngle;
+import static com.argsrobotics.crescendo2024.Constants.Arm.kZeroAngle;
 
+import com.argsrobotics.lib.util.CountingDelay;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.RobotState;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import java.util.function.DoubleSupplier;
 import org.littletonrobotics.junction.AutoLogOutput;
@@ -28,9 +35,17 @@ import org.littletonrobotics.junction.Logger;
 public class Arm extends SubsystemBase implements AutoCloseable {
   private ArmIO io;
   private ArmIOInputsAutoLogged inputs = new ArmIOInputsAutoLogged();
+  private static final InterpolatingDoubleTreeMap aimer = new InterpolatingDoubleTreeMap();
+
+  private final CountingDelay downDelay = new CountingDelay();
+
+  private Rotation2d positionSetpoint = kZeroAngle;
+  private Rotation2d finalPositionSetpoint = kZeroAngle;
 
   public Arm(ArmIO io) {
     this.io = io;
+
+    aimer.put(0.9607 - 0.2617, kDownAngle.getRadians());
   }
 
   @Override
@@ -40,6 +55,23 @@ public class Arm extends SubsystemBase implements AutoCloseable {
     if (RobotState.isDisabled()) {
       io.setPercent(0);
       io.setPosition(null);
+    }
+
+    if (!finalPositionSetpoint.equals(positionSetpoint) && downDelay.delay(1)) {
+      positionSetpoint = positionSetpoint.minus(Rotation2d.fromDegrees(15));
+      if (positionSetpoint.getDegrees() < finalPositionSetpoint.getDegrees()) {
+        positionSetpoint = finalPositionSetpoint;
+      }
+
+      downDelay.reset();
+    }
+
+    if (kDownAngle.getDegrees() > positionSetpoint.getDegrees()) {
+      io.setPosition(kDownAngle.getRotations());
+    } else if (95 < positionSetpoint.getDegrees()) {
+      io.setPosition(Units.degreesToRotations(95));
+    } else {
+      io.setPosition(positionSetpoint.getRotations());
     }
 
     Logger.processInputs("Arm", inputs);
@@ -53,13 +85,37 @@ public class Arm extends SubsystemBase implements AutoCloseable {
    * @param angle the new angle to set
    */
   public void setAngle(Rotation2d angle) {
-    if (kDownAngle.getDegrees() > angle.getDegrees()) {
-      io.setPosition(kDownAngle.getRotations());
-    } else if (90 < angle.getDegrees()) {
-      io.setPosition(Units.radiansToRotations(90));
+    if (angle.getRotations() > inputs.position) {
+      finalPositionSetpoint = angle;
+      if (finalPositionSetpoint.getDegrees() >= 95) {
+        finalPositionSetpoint = Rotation2d.fromDegrees(95);
+      } else if (finalPositionSetpoint.getDegrees() <= kDownAngle.getDegrees()) {
+        finalPositionSetpoint = kDownAngle;
+      }
+      positionSetpoint = angle;
     } else {
-      io.setPosition(angle.getRotations());
+      finalPositionSetpoint = angle;
+      if (finalPositionSetpoint.getDegrees() >= 95) {
+        finalPositionSetpoint = Rotation2d.fromDegrees(95);
+      } else if (finalPositionSetpoint.getDegrees() <= kDownAngle.getDegrees()) {
+        finalPositionSetpoint = kDownAngle;
+      }
+      positionSetpoint =
+          Rotation2d.fromRotations(inputs.position).minus(Rotation2d.fromDegrees(15));
+      downDelay.reset();
     }
+  }
+
+  /**
+   * Sets the angle of the arm.
+   *
+   * @param angle the new angle to set
+   */
+  public void setAngle(ArmAngle angle) {
+    Rotation2d targetAngle =
+        angle.getAngle(
+            com.argsrobotics.crescendo2024.RobotState.getCurrentRobotState().currentPose);
+    setAngle(targetAngle);
   }
 
   /**
@@ -89,7 +145,33 @@ public class Arm extends SubsystemBase implements AutoCloseable {
    * @return a Command object representing the set arm angle command
    */
   public Command setArmAngle(Rotation2d angle) {
+    return run(() -> setAngle(angle)).ignoringDisable(true);
+  }
+
+  /**
+   * Sets the arm angle to the specified value.
+   *
+   * @param angle the angle to set the arm to
+   * @return a Command object representing the set arm angle command
+   */
+  public Command setArmAngle(ArmAngle angle) {
     return run(() -> setAngle(angle));
+  }
+
+  /** Get the arm free at the beginning of the match */
+  public Command cutLoose() {
+    return Commands.sequence(
+        setArmAngle(Rotation2d.fromDegrees(95)).withTimeout(2), setArmAngle(kDownAngle));
+  }
+
+  /** Climb down */
+  public Command climbDown() {
+    return run(() -> io.setClimbAngle(Rotation2d.fromDegrees(0).getRotations()))
+        .ignoringDisable(true);
+  }
+
+  public Command holdArm() {
+    return setArmAngle(kZeroAngle);
   }
 
   /**
@@ -105,5 +187,38 @@ public class Arm extends SubsystemBase implements AutoCloseable {
   @Override
   public void close() {
     io.close();
+  }
+
+  public static enum ArmAngle {
+    SUBWOOFER(kDownAngle),
+    PODIUM(kDownAngle),
+    INTAKE(kDownAngle),
+    AMP(Rotation2d.fromDegrees(90)),
+    AUTO(new Rotation2d());
+
+    private Rotation2d angle;
+
+    private ArmAngle(Rotation2d angle) {
+      this.angle = angle;
+    }
+
+    public Rotation2d getAngle(Pose2d currentPose) {
+      if (this == ArmAngle.AUTO) {
+        Pose2d speakerPose;
+        if (DriverStation.getAlliance().isPresent()
+            && DriverStation.getAlliance().get() == Alliance.Red) {
+          speakerPose = new Pose2d(16.3, 5.549, new Rotation2d());
+        } else {
+          speakerPose = new Pose2d(0.2167, 5.549, new Rotation2d());
+        }
+
+        double distance =
+            Math.abs(currentPose.getTranslation().getDistance(speakerPose.getTranslation()));
+
+        return new Rotation2d(aimer.get(distance));
+      }
+
+      return this.angle;
+    }
   }
 }

@@ -43,6 +43,7 @@ import com.pathplanner.lib.util.HolonomicPathFollowerConfig;
 import com.pathplanner.lib.util.PIDConstants;
 import com.pathplanner.lib.util.PathPlannerLogging;
 import com.pathplanner.lib.util.ReplanningConfig;
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -99,6 +100,10 @@ public class Drive extends SubsystemBase implements AutoCloseable {
 
   private final SysIdRoutine angleRoutine;
 
+  private final PIDController headingPid =
+      new PIDController(
+          kPathFollowRotationalP.get(), kPathFollowRotationalI.get(), kPathFollowRotationalD.get());
+
   private final SlewRateLimiter magLimiter = new SlewRateLimiter(kMagnitudeSlewRate);
   private final SlewRateLimiter rotLimiter = new SlewRateLimiter(kRotationalSlewRate);
 
@@ -107,6 +112,9 @@ public class Drive extends SubsystemBase implements AutoCloseable {
   private double currentTranslationMag = 0.0;
 
   private double driftRate = kDriftRate.get();
+
+  private Pose2d pointTowards = null;
+  private Rotation2d desiredHeading = null;
 
   private final Field2d field = new Field2d();
 
@@ -172,6 +180,8 @@ public class Drive extends SubsystemBase implements AutoCloseable {
   public void periodic() {
     if (kTuningMode) {
       driftRate = kDriftRate.get();
+      headingPid.setPID(
+          kPathFollowRotationalP.get(), kPathFollowRotationalI.get(), kPathFollowRotationalD.get());
     }
 
     processInputs();
@@ -195,41 +205,56 @@ public class Drive extends SubsystemBase implements AutoCloseable {
       Logger.recordOutput("SwerveStates/SetpointsOptimized", new SwerveModuleState[] {});
     }
 
-    double[] sampleTimestamps =
-        modules[0].getOdometryTimestamps(); // All signals are sampled together
-    int sampleCount = sampleTimestamps.length;
-    for (int i = 0; i < sampleCount; i++) {
-      // Read wheel positions and deltas from each module
-      SwerveModulePosition[] modulePositions = new SwerveModulePosition[4];
-      SwerveModulePosition[] moduleDeltas = new SwerveModulePosition[4];
-      for (int moduleIndex = 0; moduleIndex < 4; moduleIndex++) {
-        modulePositions[moduleIndex] = modules[moduleIndex].getOdometryPositions()[i];
-        moduleDeltas[moduleIndex] =
-            new SwerveModulePosition(
-                modulePositions[moduleIndex].distanceMeters
-                    - lastModulePositions[moduleIndex].distanceMeters,
-                modulePositions[moduleIndex].angle);
-        lastModulePositions[moduleIndex] = modulePositions[moduleIndex];
-      }
+    // double[] sampleTimestamps =
+    //     modules[0].getOdometryTimestamps(); // All signals are sampled together
+    // int sampleCount = sampleTimestamps.length;
+    // for (int i = 0; i < sampleCount; i++) {
+    //   // Read wheel positions and deltas from each module
+    //   SwerveModulePosition[] modulePositions = new SwerveModulePosition[4];
+    //   SwerveModulePosition[] moduleDeltas = new SwerveModulePosition[4];
+    //   for (int moduleIndex = 0; moduleIndex < 4; moduleIndex++) {
+    //     modulePositions[moduleIndex] = modules[moduleIndex].getOdometryPositions()[i];
+    //     moduleDeltas[moduleIndex] =
+    //         new SwerveModulePosition(
+    //             modulePositions[moduleIndex].distanceMeters
+    //                 - lastModulePositions[moduleIndex].distanceMeters,
+    //             modulePositions[moduleIndex].angle);
+    //     lastModulePositions[moduleIndex] = modulePositions[moduleIndex];
+    //   }
 
-      // Update gyro angle
-      if (gyroInputs.connected) {
-        // Use the real gyro angle
-        rawGyroRotation = gyroInputs.odometryYawPositions[i];
-      } else {
-        // Use the angle delta from the kinematics and module deltas
-        Twist2d twist = kinematics.toTwist2d(moduleDeltas);
-        rawGyroRotation = rawGyroRotation.plus(new Rotation2d(twist.dtheta));
-      }
+    //   // Update gyro angle
+    //   if (gyroInputs.connected) {
+    //     // Use the real gyro angle
+    //     rawGyroRotation = gyroInputs.odometryYawPositions[i];
+    //   } else {
+    //     // Use the angle delta from the kinematics and module deltas
+    //     Twist2d twist = kinematics.toTwist2d(moduleDeltas);
+    //     rawGyroRotation = rawGyroRotation.plus(new Rotation2d(twist.dtheta));
+    //   }
 
-      // Apply update
-      estimator.updateWithTime(sampleTimestamps[i], rawGyroRotation, modulePositions);
+    //   // Apply update
+    //   estimator.updateWithTime(sampleTimestamps[i], rawGyroRotation, modulePositions);
+    // }
+
+    SwerveModulePosition[] positions = getModulePositions();
+
+    if (gyroInputs.connected) {
+      rawGyroRotation = gyroInputs.yawPosition;
+    } else {
+      Twist2d twist = kinematics.toTwist2d(positions);
+      rawGyroRotation = rawGyroRotation.plus(new Rotation2d(twist.dtheta));
     }
+
+    estimator.update(rawGyroRotation, positions);
 
     pose = estimator.getEstimatedPosition();
 
     RobotState.getCurrentRobotState().currentPose = pose;
     RobotState.getCurrentRobotState().currentModuleStates = getModuleStates();
+
+    if (pointTowards != null) {
+      desiredHeading = pointTowards.relativeTo(pose).getRotation();
+    }
 
     // Update field
     field.setRobotPose(pose);
@@ -266,6 +291,11 @@ public class Drive extends SubsystemBase implements AutoCloseable {
   public void runVelocity(ChassisSpeeds speeds, Translation2d centerOfRot) {
     // This is basically the same as ChassisSpeeds.discretize() but a little bit better (I hope).
     ChassisSpeeds discreteSpeeds = AdvancedSwerveKinematics.correctForDynamics(speeds, driftRate);
+
+    if (desiredHeading != null) {
+      discreteSpeeds.omegaRadiansPerSecond =
+          headingPid.calculate(getHeading().getRadians(), desiredHeading.getRadians());
+    }
 
     SwerveModuleState[] setpointStates =
         kinematics.toSwerveModuleStates(discreteSpeeds, centerOfRot);
@@ -375,6 +405,17 @@ public class Drive extends SubsystemBase implements AutoCloseable {
   /** Follow an auto routine */
   public Command followAuto(String auto) {
     return AutoBuilder.buildAuto(auto);
+  }
+
+  /** Rotate to a specific heading */
+  public void setHeading(Rotation2d heading) {
+    pointTowards = null;
+    desiredHeading = heading;
+  }
+
+  /** Rotate towards a specific pose */
+  public void setPose(Pose2d pose) {
+    pointTowards = pose;
   }
 
   /** Stops the drive. */

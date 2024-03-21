@@ -82,7 +82,8 @@ public class Module implements AutoCloseable {
     if (forceExact) {
       optimizedState = state;
     } else {
-      optimizedState = SwerveModuleState.optimize(state, getAngle());
+      optimizedState =
+          SwerveModuleState.optimize(state, angleSetpoint != null ? angleSetpoint : getAngle());
     }
 
     // Update setpoints, controllers run in "periodic"

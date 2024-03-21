@@ -14,21 +14,21 @@
 package com.argsrobotics.crescendo2024.subsystems.intake;
 
 import com.argsrobotics.crescendo2024.RobotState;
-import edu.wpi.first.math.filter.Debouncer;
-import edu.wpi.first.math.filter.Debouncer.DebounceType;
-import edu.wpi.first.math.filter.LinearFilter;
+import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import java.util.function.BooleanSupplier;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
 public class Intake extends SubsystemBase {
   private final IntakeIO io;
   private final IntakeIOInputsAutoLogged inputs = new IntakeIOInputsAutoLogged();
-  private final LinearFilter currentFilter = LinearFilter.singlePoleIIR(0.1, 0.02);
-  private double filteredCurrent = 0;
-  private final Debouncer debounce = new Debouncer(0.1, DebounceType.kRising);
+  // private final LinearFilter currentFilter = LinearFilter.singlePoleIIR(0.1, 0.02);
+  // private double filteredCurrent = 0;
+  // private final Debouncer debounce = new Debouncer(kDebounceDelay.get(), DebounceType.kRising);
+  private final DigitalInput limitSwitch = new DigitalInput(0);
 
   public Intake(IntakeIO io) {
     this.io = io;
@@ -45,7 +45,7 @@ public class Intake extends SubsystemBase {
     }
 
     Logger.processInputs("Intake", inputs);
-    filteredCurrent = currentFilter.calculate(inputs.current);
+    // filteredCurrent = currentFilter.calculate(inputs.current);
     RobotState.getCurrentRobotState().intakeSpeed = inputs.percent;
   }
 
@@ -61,24 +61,30 @@ public class Intake extends SubsystemBase {
     io.setPercent(0);
   }
 
-  @AutoLogOutput(key = "Intake/Current")
-  public double getCurrent() {
-    return filteredCurrent;
+  // @AutoLogOutput(key = "Intake/Current")
+  // public double getCurrent() {
+  //   return filteredCurrent;
+  // }
+
+  @AutoLogOutput(key = "Arm/LimitSwitch")
+  public boolean limitSwitchTripped() {
+    return limitSwitch.get();
   }
 
   public Command feedCommand() {
     return runEnd(() -> io.setPercent(1.0), () -> io.setPercent(0));
   }
 
-  public Command intakeCommand(Command shooterCmd) {
+  public Command intakeCommand(Command shooterCmd, BooleanSupplier useLimitSwitch) {
     return runEnd(() -> intake(), () -> io.setPercent(0))
-        .until(() -> debounce.calculate(filteredCurrent > 35))
+        // .until(() -> debounce.calculate(filteredCurrent > kCurrentStop.get()))
+        .until(() -> useLimitSwitch.getAsBoolean() && limitSwitchTripped())
         .andThen(
-            Commands.parallel(runEnd(() -> io.setPercent(-0.3), () -> io.setPercent(0)), shooterCmd)
-                .withTimeout(0.8));
+            Commands.parallel(runEnd(() -> io.setPercent(-0.2), () -> io.setPercent(0)), shooterCmd)
+                .withTimeout(0.5));
   }
 
   public Command spitCommand() {
-    return run(() -> spit()).withTimeout(3).andThen(this::stop);
+    return runEnd(this::spit, this::stop);
   }
 }

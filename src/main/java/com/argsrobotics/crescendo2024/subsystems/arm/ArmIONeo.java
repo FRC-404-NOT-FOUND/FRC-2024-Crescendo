@@ -35,6 +35,8 @@ public class ArmIONeo implements ArmIO {
   private final SparkPIDController rightPidController;
   private ArmFeedforward ff = new ArmFeedforward(0, kArmFF.get(), 0);
 
+  private int climb = 1;
+
   private Double positionSetpoint = null;
 
   public ArmIONeo(int left, int right) {
@@ -44,8 +46,8 @@ public class ArmIONeo implements ArmIO {
     leftMotor.restoreFactoryDefaults();
     rightMotor.restoreFactoryDefaults();
 
-    leftMotor.setInverted(false);
-    rightMotor.setInverted(true);
+    leftMotor.setInverted(true);
+    rightMotor.setInverted(false);
 
     leftMotor.setCANTimeout(250);
     rightMotor.setCANTimeout(250);
@@ -98,9 +100,9 @@ public class ArmIONeo implements ArmIO {
     rightMotor.enableSoftLimit(SoftLimitDirection.kForward, true);
     rightMotor.enableSoftLimit(SoftLimitDirection.kReverse, true);
 
-    leftMotor.setSoftLimit(SoftLimitDirection.kForward, (float) Units.degreesToRotations(90));
+    leftMotor.setSoftLimit(SoftLimitDirection.kForward, (float) Units.degreesToRotations(95));
     leftMotor.setSoftLimit(SoftLimitDirection.kReverse, (float) kDownAngle.getRotations());
-    rightMotor.setSoftLimit(SoftLimitDirection.kForward, (float) Units.degreesToRotations(90));
+    rightMotor.setSoftLimit(SoftLimitDirection.kForward, (float) Units.degreesToRotations(95));
     rightMotor.setSoftLimit(SoftLimitDirection.kReverse, (float) kDownAngle.getRotations());
 
     leftMotor.burnFlash();
@@ -120,16 +122,16 @@ public class ArmIONeo implements ArmIO {
     }
 
     if (positionSetpoint != null) {
+      double voltage;
+      if (Math.abs(positionSetpoint - kDownAngle.getRotations()) <= 2) {
+        voltage = 0;
+      } else {
+        voltage = ff.calculate(Units.rotationsToRadians(positionSetpoint), 0);
+      }
       leftPidController.setReference(
-          positionSetpoint,
-          CANSparkBase.ControlType.kPosition,
-          0,
-          ff.calculate(positionSetpoint, 0));
+          positionSetpoint, CANSparkBase.ControlType.kPosition, 0, climb * voltage);
       rightPidController.setReference(
-          positionSetpoint,
-          CANSparkBase.ControlType.kPosition,
-          0,
-          ff.calculate(positionSetpoint, 0));
+          positionSetpoint, CANSparkBase.ControlType.kPosition, 0, climb * voltage);
     }
 
     inputs.position = leftEncoder.getPosition();
@@ -141,6 +143,13 @@ public class ArmIONeo implements ArmIO {
   @Override
   public void setPosition(Double position) {
     positionSetpoint = position;
+    climb = 1;
+  }
+
+  @Override
+  public void setClimbAngle(Double angle) {
+    positionSetpoint = angle;
+    climb = -1;
   }
 
   @Override

@@ -86,4 +86,36 @@ public class DriverOIXBox implements DriverOI {
   public Trigger getShoot() {
     return gamepad.x();
   }
+
+  @Override
+  public Trigger getArmDownPosition() {
+    return gamepad.leftBumper();
+  }
+
+  @Override
+  public Trigger getArmAmpPosition() {
+    return gamepad.rightBumper();
+  }
+
+  @Override
+  public Trigger getArmPodiumPosition() {
+    return new Trigger(() -> false);
+  }
+
+  @Override
+  public Trigger getAmpShoot() {
+    return gamepad.y();
+  }
+
+  public Trigger getToggleLimitSwitch() {
+    return gamepad.pov(90);
+  }
+
+  public Trigger getClimbDown() {
+    return gamepad.pov(180);
+  }
+
+  public Trigger getToggleFieldOriented() {
+    return gamepad.pov(270);
+  }
 }

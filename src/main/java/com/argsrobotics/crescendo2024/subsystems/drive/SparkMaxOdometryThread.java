@@ -33,7 +33,7 @@ import org.littletonrobotics.junction.Logger;
 public class SparkMaxOdometryThread implements AutoCloseable {
   private List<Supplier<OptionalDouble>> signals = new ArrayList<>();
   private List<Queue<Double>> queues = new ArrayList<>();
-  private List<Queue<Double>> timestampQueues = new ArrayList<>();
+  private static Queue<Double> timestampQueue = new ArrayBlockingQueue<>(100);
 
   private final Notifier notifier;
   private static SparkMaxOdometryThread instance = null;
@@ -51,9 +51,7 @@ public class SparkMaxOdometryThread implements AutoCloseable {
   }
 
   public void start() {
-    if (timestampQueues.size() > 0) {
-      notifier.startPeriodic(1.0 / kOdometryFrequency);
-    }
+    notifier.startPeriodic(1.0 / kOdometryFrequency);
   }
 
   public Queue<Double> registerSignal(Supplier<OptionalDouble> signal) {
@@ -69,14 +67,7 @@ public class SparkMaxOdometryThread implements AutoCloseable {
   }
 
   public Queue<Double> makeTimestampQueue() {
-    Queue<Double> queue = new ArrayBlockingQueue<>(20);
-    Drive.odometryLock.lock();
-    try {
-      timestampQueues.add(queue);
-    } finally {
-      Drive.odometryLock.unlock();
-    }
-    return queue;
+    return timestampQueue;
   }
 
   private void periodic() {
@@ -98,9 +89,7 @@ public class SparkMaxOdometryThread implements AutoCloseable {
         for (int i = 0; i < queues.size(); i++) {
           queues.get(i).offer(values[i]);
         }
-        for (int i = 0; i < timestampQueues.size(); i++) {
-          timestampQueues.get(i).offer(timestamp);
-        }
+        timestampQueue.offer(timestamp);
       }
     } finally {
       Drive.odometryLock.unlock();

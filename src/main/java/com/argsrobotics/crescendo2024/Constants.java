@@ -91,7 +91,7 @@ public final class Constants {
     public static final TunableNumber kDriveI = new TunableNumber("Drive kI", 0.0);
     public static final TunableNumber kDriveD = new TunableNumber("Drive kD", 0.01);
 
-    public static final TunableNumber kTurnP = new TunableNumber("Turn kP", 2.65);
+    public static final TunableNumber kTurnP = new TunableNumber("Turn kP", 3);
     public static final TunableNumber kTurnI = new TunableNumber("Turn kI", 0.0);
     public static final TunableNumber kTurnD = new TunableNumber("Turn kD", 0.01);
     public static final TunableNumber kTurnFF = new TunableNumber("Turn kFF", 0.0);
@@ -123,14 +123,14 @@ public final class Constants {
   }
 
   public static class Arm {
-    public static final TunableNumber kArmP = new TunableNumber("Arm kP", 0.6);
+    public static final TunableNumber kArmP = new TunableNumber("Arm kP", 3);
     public static final TunableNumber kArmI = new TunableNumber("Arm kI", 0.0);
-    public static final TunableNumber kArmD = new TunableNumber("Arm kD", 0.002);
-    public static final TunableNumber kArmFF = new TunableNumber("Arm kFF", 0.0);
+    public static final TunableNumber kArmD = new TunableNumber("Arm kD", 0.01);
+    public static final TunableNumber kArmFF = new TunableNumber("Arm kFF", 1.0);
 
-    public static final Rotation2d kZeroAngle = Rotation2d.fromDegrees(-4);
+    public static final Rotation2d kZeroAngle = Rotation2d.fromDegrees(66);
     public static final Rotation2d kDownAngle = Rotation2d.fromDegrees(-4);
-    public static final double kGearRatio = (100.0 / 1.0) * (28.0 / 25.0);
+    public static final double kGearRatio = (100.0 / 1.0) * (42.0 / 25.0);
 
     public static final Rotation2d kAmpAngle = new Rotation2d();
     public static final Rotation2d kClimbAngle = new Rotation2d();

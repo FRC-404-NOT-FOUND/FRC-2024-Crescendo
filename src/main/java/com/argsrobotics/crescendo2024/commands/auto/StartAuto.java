@@ -13,15 +13,20 @@
 
 package com.argsrobotics.crescendo2024.commands.auto;
 
+import static com.argsrobotics.crescendo2024.Constants.Arm.kDownAngle;
+
+import com.argsrobotics.crescendo2024.subsystems.arm.Arm;
 import com.argsrobotics.crescendo2024.subsystems.drive.Drive;
+import com.pathplanner.lib.util.GeometryUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 
-public class ResetPose extends Command {
-  private Drive drive;
-  private Position position;
-
+public class StartAuto extends SequentialCommandGroup {
   public static enum Position {
     LEFT(new Pose2d(0.77, 6.8, Rotation2d.fromDegrees(58))),
     CENTER(new Pose2d(1.49, 5.54, new Rotation2d(0.0))),
@@ -34,24 +39,23 @@ public class ResetPose extends Command {
     }
 
     public Pose2d getPose() {
+      if (DriverStation.getAlliance().isPresent()
+          && DriverStation.getAlliance().get() == Alliance.Red) {
+        return GeometryUtil.flipFieldPose(position);
+      }
       return position;
     }
   }
 
-  public ResetPose(Drive drive, Position position) {
-    this.drive = drive;
-    this.position = position;
+  public StartAuto(Drive drive, Arm arm, Position position) {
+    addRequirements(drive, arm);
 
-    addRequirements(drive);
-  }
-
-  @Override
-  public void initialize() {
-    drive.resetOdometry(position.getPose());
-  }
-
-  @Override
-  public boolean isFinished() {
-    return true;
+    addCommands(
+        // Commands.runOnce(() -> drive.resetOdometry(position.getPose())),
+        Commands.runEnd(
+                () -> drive.runVelocity(new ChassisSpeeds(-4, 0, 0)),
+                () -> drive.runVelocity(new ChassisSpeeds()))
+            .withTimeout(0.5),
+        arm.setArmAngle(kDownAngle));
   }
 }

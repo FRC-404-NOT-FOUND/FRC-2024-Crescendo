@@ -81,8 +81,8 @@ public class ModuleIOSparkMax implements ModuleIO {
     turnSparkMax.restoreFactoryDefaults();
 
     // Set CAN timeouts
-    driveSparkMax.setCANTimeout(250);
-    turnSparkMax.setCANTimeout(250);
+    driveSparkMax.setCANTimeout(5);
+    turnSparkMax.setCANTimeout(5);
 
     // Configure encoders and PID controllers
     driveEncoder = driveSparkMax.getEncoder();
@@ -106,8 +106,8 @@ public class ModuleIOSparkMax implements ModuleIO {
 
     // Configure turn PID controller for wrapped position
     turnPidController.setPositionPIDWrappingEnabled(true);
-    turnPidController.setPositionPIDWrappingMinInput(0);
-    turnPidController.setPositionPIDWrappingMaxInput(2 * Math.PI);
+    turnPidController.setPositionPIDWrappingMinInput(-Math.PI);
+    turnPidController.setPositionPIDWrappingMaxInput(Math.PI);
 
     // Set position and velocity conversion factors
     driveEncoder.setPositionConversionFactor((kWheelRadius * 2 * Math.PI) / kDriveGearRatio);
@@ -170,16 +170,29 @@ public class ModuleIOSparkMax implements ModuleIO {
   @Override
   public void updateInputs(ModuleIOInputs inputs) {
     if (kTuningMode) {
-      drivePidController.setP(kDriveP.get());
-      drivePidController.setI(kDriveI.get());
-      drivePidController.setD(kDriveD.get());
-      drivePidController.setFF(0);
+      if (kDriveP.get() != drivePidController.getP()) {
+        drivePidController.setP(kDriveP.get());
+      }
 
-      turnPidController.setP(kTurnP.get());
-      turnPidController.setI(kTurnI.get());
-      turnPidController.setD(kTurnD.get());
-      turnPidController.setFF(kTurnFF.get());
+      if (kDriveI.get() != drivePidController.getI()) {
+        drivePidController.setI(kDriveI.get());
+      }
 
+      if (kDriveD.get() != drivePidController.getD()) {
+        drivePidController.setD(kDriveD.get());
+      }
+
+      if (kTurnP.get() != turnPidController.getP()) {
+        turnPidController.setP(kTurnP.get());
+      }
+
+      if (kTurnI.get() != turnPidController.getI()) {
+        turnPidController.setI(kTurnI.get());
+      }
+
+      if (kTurnD.get() != turnPidController.getD()) {
+        turnPidController.setD(kTurnD.get());
+      }
       driveFeedforward = new SimpleMotorFeedforward(kDriveS.get(), kDriveV.get());
     }
 

@@ -26,7 +26,7 @@ public class GyroIOADIS16448 implements GyroIO {
   private final Supplier<OptionalDouble> yaw =
       () -> {
         if (gyro.isConnected()) {
-          return OptionalDouble.of(gyro.getAngle());
+          return OptionalDouble.of(-gyro.getAngle());
         } else {
           return OptionalDouble.empty();
         }
@@ -43,8 +43,8 @@ public class GyroIOADIS16448 implements GyroIO {
   @Override
   public void updateInputs(GyroIOInputs inputs) {
     inputs.connected = gyro.isConnected();
-    inputs.yawPosition = Rotation2d.fromDegrees(gyro.getAngle());
-    inputs.yawVelocityRadPerSec = Units.degreesToRadians(gyro.getRate());
+    inputs.yawPosition = Rotation2d.fromDegrees(-gyro.getAngle());
+    inputs.yawVelocityRadPerSec = Units.degreesToRadians(-gyro.getRate());
 
     inputs.odometryYawTimestamps =
         yawTimestampQueue.stream().mapToDouble((Double value) -> value).toArray();

@@ -69,10 +69,10 @@ public class Shooter extends SubsystemBase {
   }
 
   public Command shoot(ShooterSpeeds speeds) {
-    return run(() -> setSpeeds(speeds)).withTimeout(1.5).andThen(this::stop);
+    return runEnd(() -> setSpeeds(speeds), this::stop);
   }
 
   public Command feedBackwards() {
-    return runEnd(() -> setSpeeds(new ShooterSpeeds(0.1, -0.1, -0.1, 0.1)), this::stop);
+    return runEnd(() -> setSpeeds(new ShooterSpeeds(0.1, -0.1)), this::stop);
   }
 }

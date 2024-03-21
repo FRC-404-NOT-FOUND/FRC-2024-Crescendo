@@ -28,6 +28,8 @@ public interface ArmIO extends AutoCloseable {
 
   public default void setPosition(Double position) {}
 
+  public default void setClimbAngle(Double position) {}
+
   public default void setPercent(double percent) {}
 
   public default void close() {}

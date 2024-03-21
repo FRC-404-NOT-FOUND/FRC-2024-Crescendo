@@ -17,52 +17,52 @@ import org.littletonrobotics.junction.AutoLog;
 
 public interface ShooterIO {
   public static class ShooterSpeeds {
-    public double tl;
-    public double tr;
-    public double bl;
-    public double br;
+    // public double tl;
+    // public double tr;
+    public double top;
+    public double bottom;
 
-    public ShooterSpeeds(double topLeft, double topRight, double bottomLeft, double bottomRight) {
-      tl = topLeft;
-      tr = topRight;
-      bl = bottomLeft;
-      br = bottomRight;
+    public ShooterSpeeds(double t, double b) {
+      // tl = topLeft;
+      // tr = topRight;
+      top = t;
+      bottom = b;
     }
 
     public ShooterSpeeds() {
-      tl = -0.48;
-      tr = 0.5;
-      bl = 0.48;
-      br = -0.5;
+      // tl = -0.5;
+      // tr = 0.5;
+      top = -0.5;
+      bottom = 0.5;
     }
 
     public void setIndex(int index, double speed) {
       switch (index) {
+          // case 0:
+          //   tl = speed;
+          //   break;
+          // case 1:
+          //   tr = speed;
+          //   break;
         case 0:
-          tl = speed;
+          top = speed;
           break;
         case 1:
-          tr = speed;
-          break;
-        case 2:
-          bl = speed;
-          break;
-        case 3:
-          br = speed;
+          bottom = speed;
           break;
       }
     }
 
     public double getIndex(int index) {
       switch (index) {
+          // case 0:
+          //   return tl;
+          // case 1:
+          //   return tr;
         case 0:
-          return tl;
+          return top;
         case 1:
-          return tr;
-        case 2:
-          return bl;
-        case 3:
-          return br;
+          return bottom;
         default:
           return 0;
       }
