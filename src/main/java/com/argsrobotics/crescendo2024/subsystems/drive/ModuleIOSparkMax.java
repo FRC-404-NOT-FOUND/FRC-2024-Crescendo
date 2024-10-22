@@ -57,20 +57,20 @@ public class ModuleIOSparkMax implements ModuleIO {
     this.chassisAngularOffset = chassisAngularOffset;
     switch (index) {
       case 0:
-        driveSparkMax = new CANSparkMax(1, MotorType.kBrushless);
-        turnSparkMax = new CANSparkMax(2, MotorType.kBrushless);
+        driveSparkMax = new CANSparkMax(2, MotorType.kBrushless); // f left drive
+        turnSparkMax = new CANSparkMax(22, MotorType.kBrushless); // f left turn
         break;
       case 1:
-        driveSparkMax = new CANSparkMax(3, MotorType.kBrushless);
-        turnSparkMax = new CANSparkMax(4, MotorType.kBrushless);
+        driveSparkMax = new CANSparkMax(1, MotorType.kBrushless); // f right drive
+        turnSparkMax = new CANSparkMax(11, MotorType.kBrushless); // f right turn
         break;
       case 2:
-        driveSparkMax = new CANSparkMax(5, MotorType.kBrushless);
-        turnSparkMax = new CANSparkMax(6, MotorType.kBrushless);
+        driveSparkMax = new CANSparkMax(3, MotorType.kBrushless); // b left drive
+        turnSparkMax = new CANSparkMax(33, MotorType.kBrushless); // b left turn
         break;
       case 3:
-        driveSparkMax = new CANSparkMax(7, MotorType.kBrushless);
-        turnSparkMax = new CANSparkMax(8, MotorType.kBrushless);
+        driveSparkMax = new CANSparkMax(4, MotorType.kBrushless); // b right drive
+        turnSparkMax = new CANSparkMax(44, MotorType.kBrushless); // b right turn
         break;
       default:
         throw new RuntimeException("Invalid module index");
