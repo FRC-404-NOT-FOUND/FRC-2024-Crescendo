@@ -115,39 +115,48 @@ public final class Constants {
         new TunableNumber("Path Follow Linear kD", 0.0);
 
     public static final TunableNumber kPathFollowRotationalP =
-        new TunableNumber("Path Follow Rotational kP", 5.0);
+        new TunableNumber("Path Follow Rotational kP", 1.9);
     public static final TunableNumber kPathFollowRotationalI =
         new TunableNumber("Path Follow Rotational kI", 0.0);
     public static final TunableNumber kPathFollowRotationalD =
-        new TunableNumber("Path Follow Rotational kD", 0.0);
+        new TunableNumber("Path Follow Rotational kD", 0.01);
   }
 
   public static class Arm {
-    public static final TunableNumber kArmP = new TunableNumber("Arm kP", 3);
+    public static final TunableNumber kArmP = new TunableNumber("Arm kP", 10);
     public static final TunableNumber kArmI = new TunableNumber("Arm kI", 0.0);
     public static final TunableNumber kArmD = new TunableNumber("Arm kD", 0.01);
-    public static final TunableNumber kArmFF = new TunableNumber("Arm kFF", 1.0);
+    public static final TunableNumber kArmG = new TunableNumber("Arm kG", 0.5);
+    public static final TunableNumber kArmV = new TunableNumber("Arm kV", 4.05);
+    public static final TunableNumber kArmA = new TunableNumber("Arm kA", 0.04);
+
+    public static final double kMaxVelocity = 4;
+    public static final double kMaxAcceleration = 50;
 
     public static final Rotation2d kZeroAngle = Rotation2d.fromDegrees(66);
     public static final Rotation2d kDownAngle = Rotation2d.fromDegrees(-4);
-    public static final double kGearRatio = (100.0 / 1.0) * (42.0 / 25.0);
+    public static final double kGearRatio = (100.0 / 1.0) * (52.0 / 25.0);
 
-    public static final Rotation2d kAmpAngle = new Rotation2d();
-    public static final Rotation2d kClimbAngle = new Rotation2d();
-    public static final Rotation2d kSpeakerAngle = new Rotation2d();
+    public static final TunableNumber kPodiumAngle =
+        new TunableNumber("Podium shot angle degrees", 30);
 
-    public static final int kLeftMotor = 11;
-    public static final int kRightMotor = 12;
+    public static final int kLeftMotor = 9; // old 11
+    public static final int kRightMotor = 8; // old 12
   }
 
   public static class Intake {
-    public static final int kIntakeMotor = 9;
+    public static final int kIntakeMotor = 5; // old 9 - incorrect voltage
   }
 
   public static class Shooter {
-    public static final int kTopLeftShooter = 13;
-    public static final int kTopRightShooter = 14;
-    public static final int kBottomLeftShooter = 15;
-    public static final int kBottomRightShooter = 16;
+    public static final int kTopLeftShooter = 13; // unused
+    public static final int kTopRightShooter = 14; // unused
+
+    public static final int kBottomLeftShooter = 6; // top, old 15
+    public static final int kBottomRightShooter = 7; // bottom - broken, old 16
+  }
+
+  public static class Climber {
+    public static final int kClimber = 10; // old 17
   }
 }
