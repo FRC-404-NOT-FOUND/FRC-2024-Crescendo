@@ -133,8 +133,8 @@ public final class Constants {
     public static final double kMaxVelocity = 4;
     public static final double kMaxAcceleration = 50;
 
-    public static final Rotation2d kZeroAngle = Rotation2d.fromDegrees(66);
-    public static final Rotation2d kDownAngle = Rotation2d.fromDegrees(-4);
+    public static final Rotation2d kZeroAngle = Rotation2d.fromDegrees(68); // Changed from 66
+    public static final Rotation2d kDownAngle = Rotation2d.fromDegrees(4); // Changed from -4
     public static final double kGearRatio = (100.0 / 1.0) * (52.0 / 25.0);
 
     public static final TunableNumber kPodiumAngle =
