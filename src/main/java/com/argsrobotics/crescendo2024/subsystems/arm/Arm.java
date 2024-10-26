@@ -1,4 +1,5 @@
 // FRC 404's 2024 Robot code.
+// fortnite monkey balls
 // Copyright (C) 2024 FRC 404
 
 // This program is free software: you can redistribute it and/or modify
@@ -26,6 +27,7 @@ import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.RobotState;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import java.util.function.DoubleSupplier;
 import org.littletonrobotics.junction.AutoLogOutput;
@@ -145,7 +147,8 @@ public class Arm extends SubsystemBase implements AutoCloseable {
    * @return a Command object representing the set arm angle command
    */
   public Command setArmAngle(Rotation2d angle) {
-    return run(() -> setAngle(angle)).ignoringDisable(true);
+    return new SequentialCommandGroup(
+        runOnce(() -> setAngle(angle)).ignoringDisable(true), Commands.waitSeconds(7));
   }
 
   /**
@@ -166,7 +169,7 @@ public class Arm extends SubsystemBase implements AutoCloseable {
 
   /** Climb down */
   public Command climbDown() {
-    return run(() -> io.setClimbAngle(Rotation2d.fromDegrees(0).getRotations()))
+    return run(() -> io.setPosition(Rotation2d.fromDegrees(0).getRotations()))
         .ignoringDisable(true);
   }
 
